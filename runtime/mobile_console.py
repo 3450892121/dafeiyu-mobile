@@ -9,6 +9,7 @@ import threading
 import time
 from pathlib import Path
 from mobile_policy import initialize, config_for_mobile, RUNTIME, LAYOUT
+from mobile_qq_status import identity_state, public_status
 
 HOME = initialize()
 CFG = config_for_mobile()
@@ -72,6 +73,10 @@ class MobileSupervisor(_BaseSupervisor):
         self._had_connection=False
         self._connection_failures=0
         self._closing=False
+        self._identity_lock=threading.Lock()
+        self._identity_checked_at=None
+        self._identity_expected=''
+        self._identity_state='unknown'
         super().__init__()
         self.user_stopped=not bool(self.cfg.get('mobile_autostart',False))
 
@@ -93,8 +98,30 @@ class MobileSupervisor(_BaseSupervisor):
             info=client.get_login_info()or{}
             if str(info.get('user_id'))!=str(self.cfg.get('login_uin')or''):
                 self._remember_uin(info.get('user_id'));return None
+            self._identity_state='connected'
             return info
-        except Exception:return None
+        except Exception:
+            # A different scanned account has no configured OneBot port. Check its
+            # live WebUI identity independently instead of treating it as logged out.
+            self._probe_qq_identity()
+            return None
+
+    def _probe_qq_identity(self):
+        with self._identity_lock:
+            expected=str(self.cfg.get('login_uin') or '')
+            now=time.monotonic()
+            if self._identity_checked_at is not None and now-self._identity_checked_at<30 and self._identity_expected==expected:
+                return self._identity_state
+            self._identity_checked_at=now
+            self._identity_expected=expected
+            if not self.napcat_running():
+                self._identity_state='stopped'
+            else:
+                response=self._webui_post('/api/QQLogin/GetQQLoginInfo',{})
+                self._identity_state=identity_state(response,expected)
+            if self._identity_state=='identity_mismatch':
+                self.block_connection(public_status(self._identity_state)['message'])
+            return self._identity_state
 
     def _qq_output(self,process):
         path=HOME/'data/napcat.log'
@@ -118,6 +145,8 @@ class MobileSupervisor(_BaseSupervisor):
                 if not executable.is_file(): raise ValueError('QQ 运行组件未初始化')
                 self._connection_blocked=False
                 self._had_connection=False
+                self._identity_checked_at=None
+                self._identity_state='unknown'
                 self.user_stopped=False
                 self._qq_process=subprocess.Popen([
                     'xvfb-run','-a',str(executable),'--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
@@ -199,6 +228,7 @@ class MobileSupervisor(_BaseSupervisor):
     def _remember_uin(self, uin):
         # Observing another account never grants permission to replace the selected small account.
         if str(uin) != str(self.cfg.get('login_uin') or ''):
+            self._identity_state='identity_mismatch'
             self.block_connection('登录身份不匹配，未修改本实例的小号配置')
 
     def block_connection(self,reason):
@@ -212,6 +242,11 @@ class MobileSupervisor(_BaseSupervisor):
         result=super().state()
         result['components']['connection_blocked']=self._connection_blocked
         if self._connection_blocked: result['components']['login']=False
+        state=self._identity_state
+        if self._connection_blocked and state!='identity_mismatch':state='paused'
+        elif result['components'].get('login'):state='connected'
+        elif state=='connected':state='unknown'
+        result['qq_connection']=public_status(state)
         return result
 
     def action(self, cmd):

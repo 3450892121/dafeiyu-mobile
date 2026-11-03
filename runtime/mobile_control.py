@@ -15,6 +15,7 @@ import time
 import urllib.parse
 import urllib.request
 from mobile_policy import initialize, config_for_mobile, RUNTIME, LAYOUT
+from mobile_qq_status import public_status
 
 
 class Control:
@@ -55,7 +56,8 @@ class Control:
                 'model_configured':bool(self.cfg.models()),'owner_configured':bool(int(self.cfg.get('owner_qq') or 0)),
                 'small_account_configured':bool(str(self.cfg.get('login_uin') or '')),
                 'autostart':bool(self.cfg.get('mobile_autostart',False)),
-                'qq_online':False,'brain_running':False,'panel_ready':False}
+                'qq_online':False,'brain_running':False,'panel_ready':False,
+                'qq_connection':public_status('unknown')}
         try:
             state=self.panel_request('/api/state')
             result['panel_ready']=True
@@ -64,6 +66,8 @@ class Control:
             result['qq_online']=bool(components.get('login'))
             result['brain_running']=bool(components.get('brain'))
             result['connection_blocked']=bool(components.get('connection_blocked'))
+            detail=state.get('qq_connection')
+            result['qq_connection']=public_status(detail.get('state') if isinstance(detail,dict) else 'unknown')
         except Exception:
             result['phase']='starting_panel'
         return result

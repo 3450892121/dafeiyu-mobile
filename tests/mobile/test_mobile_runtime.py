@@ -15,6 +15,7 @@ import zipfile
 from mobile_policy import RUNTIME, LAYOUT, config_for_mobile
 from mobile_control import Control,server
 import mobile_console
+from mobile_qq_status import identity_state, public_status
 import mobile_backup as backup
 from config import Config
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -123,6 +124,63 @@ class RuntimeTests(unittest.TestCase):
             self.assertIsNone(supervisor.login_info())
         supervisor._stop.assert_called_once_with(None)
         self.assertFalse(supervisor._connection_blocked)
+
+    def identity_supervisor(self):
+        self.cfg.set('login_uin','190001')
+        supervisor=mobile_console.MobileSupervisor.__new__(mobile_console.MobileSupervisor)
+        supervisor.cfg=self.cfg;supervisor._had_connection=False;supervisor._connection_blocked=False
+        supervisor._brain_process=None;supervisor._log_console=Mock();supervisor._stop=Mock()
+        supervisor._identity_lock=threading.Lock();supervisor._identity_checked_at=None
+        supervisor._identity_expected='';supervisor._identity_state='unknown'
+        supervisor.napcat_running=Mock(return_value=True)
+        supervisor._webui_post=Mock(return_value={'code':0,'data':{'uin':'190003','online':True}})
+        return supervisor
+
+    def test_wrong_qr_account_pauses_even_without_onebot_interface(self):
+        supervisor=self.identity_supervisor()
+        self.cfg.set('mobile_autostart',True)
+        with patch('onebot.OneBot')as factory:
+            factory.return_value.call.side_effect=ConnectionRefusedError()
+            self.assertIsNone(supervisor.login_info())
+        self.assertTrue(supervisor._connection_blocked)
+        self.assertFalse(self.cfg.get('mobile_autostart'))
+        self.assertEqual(self.cfg.get('login_uin'),'190001')
+        self.assertEqual(supervisor._identity_state,'identity_mismatch')
+        supervisor._stop.assert_called_once_with(None)
+        supervisor._webui_post.assert_called_once_with('/api/QQLogin/GetQQLoginInfo',{})
+
+    def test_matching_webui_identity_does_not_fake_message_connection(self):
+        supervisor=self.identity_supervisor()
+        supervisor._webui_post.return_value={'code':0,'data':{'uin':'190001','online':True}}
+        with patch('onebot.OneBot')as factory:
+            factory.return_value.call.side_effect=ConnectionRefusedError()
+            self.assertIsNone(supervisor.login_info())
+        self.assertFalse(supervisor._connection_blocked)
+        self.assertEqual(supervisor._identity_state,'interface_pending')
+
+    def test_identity_probe_is_rate_limited_and_not_a_relogin(self):
+        supervisor=self.identity_supervisor()
+        supervisor.quick_login=Mock();supervisor.refresh_qr=Mock()
+        with patch.object(mobile_console.time,'monotonic',side_effect=[100,108,120,131]):
+            for _ in range(4):supervisor._probe_qq_identity()
+        self.assertEqual(supervisor._webui_post.call_count,2)
+        supervisor.quick_login.assert_not_called();supervisor.refresh_qr.assert_not_called()
+
+    def test_login_diagnostic_ignores_malformed_or_sensitive_payload(self):
+        for response in (None,[],{'code':500},{'code':0,'data':[]},
+                         {'code':0,'data':{'uin':'not-an-account','online':True}}):
+            self.assertEqual(identity_state(response,'190001'),'unknown')
+        self.assertEqual(identity_state({'code':0,'data':{'uin':'190003','online':False}},'190001'),'waiting_login')
+        view=public_status({'token':'fictional-secret','qrcodeurl':'https://example.invalid/private'})
+        self.assertEqual(view['state'],'unknown')
+        self.assertNotIn('fictional-secret',json.dumps(view))
+
+    def test_control_publishes_only_fixed_connection_explanations(self):
+        self.control.panel_request=Mock(return_value={'components':{'login':False,'brain':False},
+            'qq_connection':{'state':'identity_mismatch','message':'fictional-sensitive-upstream-text'}})
+        state=self.control.status()
+        self.assertEqual(state['qq_connection']['state'],'identity_mismatch')
+        self.assertNotIn('fictional-sensitive-upstream-text',json.dumps(state))
 
     def test_three_failed_transport_probes_persist_pause_without_relogin(self):
         supervisor=mobile_console.MobileSupervisor.__new__(mobile_console.MobileSupervisor)

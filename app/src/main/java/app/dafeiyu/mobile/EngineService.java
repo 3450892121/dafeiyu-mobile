@@ -89,9 +89,13 @@ public final class EngineService extends Service {
     }
     private void render(JSONObject state){
         if(!state.optBoolean("autostart")&&!state.optBoolean("brain_running")&&wake!=null&&wake.isHeld())wake.release();
-        if(state.optBoolean("connection_blocked"))update("QQ 连接已暂停，请打开登录页检查后手动恢复");
+        JSONObject detail=state.optJSONObject("qq_connection");
+        String connection=detail==null?"unknown":detail.optString("state","unknown");
+        if("identity_mismatch".equals(connection))update("登录号与设置的小号不一致，已暂停；请切换账号后手动启动");
+        else if(state.optBoolean("connection_blocked"))update("QQ 连接已暂停，请打开登录页检查后手动恢复");
         else if(state.optBoolean("qq_online")&&state.optBoolean("brain_running"))update("QQ 已连接 · 大脑正在本机运行");
         else if(state.optBoolean("qq_online"))update("QQ 已连接，请检查 AI 和管理员设置");
+        else if("interface_pending".equals(connection))update("指定小号已登录，机器人消息接口尚未接通");
         else if(!state.optBoolean("small_account_configured")||!state.optBoolean("owner_configured")||!state.optBoolean("model_configured"))update("请在设置中填写新小号、管理员和 AI 接口");
         else update("尚未登录 QQ，请打开登录页完成登录");
     }
