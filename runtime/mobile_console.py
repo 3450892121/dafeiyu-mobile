@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from mobile_policy import initialize, config_for_mobile, RUNTIME, LAYOUT
 from mobile_qq_status import identity_state, public_status
+from mobile_session import qq_environment
 
 HOME = initialize()
 CFG = config_for_mobile()
@@ -151,7 +152,7 @@ class MobileSupervisor(_BaseSupervisor):
                 self._qq_process=subprocess.Popen([
                     'xvfb-run','-a',str(executable),'--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
                     '--user-data-dir='+str(HOME/'qq-profile'),'-q',uin],
-                    cwd=str(NAPCAT),env={**os.environ,'HOME':str(HOME),'LANG':'C.UTF-8'},
+                    cwd=str(NAPCAT),env=qq_environment(HOME,NAPCAT),
                     stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,start_new_session=True)
                 threading.Thread(target=self._qq_output,args=(self._qq_process,),daemon=True).start()
                 return True

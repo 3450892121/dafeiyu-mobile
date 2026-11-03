@@ -95,6 +95,17 @@ class Control:
                     text+=f.read(32768).decode('utf-8','replace')+'\n'
         return {'ok':True,'recent_flags':[label for label,terms in patterns.items() if any(term in text for term in terms)]}
 
+    def qq_session(self):
+        from mobile_session import candidates,has_login_database,saved_login_status
+        roots=candidates(self.home)
+        saved=saved_login_status(self.home,str(self.cfg.get('login_uin')or''),LAYOUT['ports']['qqWebui'])
+        if not saved['available']:message='暂时无法读取登录保存状态，不能据此认定资料已丢失。'
+        elif saved['saved_account']:message='QQ 内核仍有此小号的快速登录记录；是否恢复在线须以连接结果为准。'
+        else:message='QQ 内核未列出此小号可用的快速登录记录；不会自动清空资料或反复登录。'
+        return {'ok':True,**saved,'message':message,
+                'login_database_present':any(has_login_database(root)for root in roots.values()),
+                'directory_pinned':(self.home/'data/qq-session-directory.json').is_file()}
+
     def save_basic(self, fields):
         allowed={'login_uin','owner_qq','bot_name','owner_name','allow_users','allow_groups','weather_home_city'}
         changes={}
@@ -215,6 +226,7 @@ def server(control,port=None):
             try:
                 if route=='/api/status':return self.response(200,control.status())
                 if route=='/api/qqdiagnostic':return self.response(200,control.qq_diagnostics())
+                if route=='/api/qqsession':return self.response(200,control.qq_session())
                 if route=='/api/urls':return self.response(200,control.urls())
                 if route=='/api/asr':return self.response(200,control.asr_status())
                 if route=='/api/privacy':return self.response(200,control.privacy())
