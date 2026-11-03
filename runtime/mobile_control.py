@@ -77,6 +77,24 @@ class Control:
             raise ValueError('不支持的本机操作')
         return self.panel_request('/api/action',{'cmd':command})
 
+    def qq_diagnostics(self):
+        patterns={
+            '虚拟屏幕启动失败':('Xvfb failed to start','xvfb-run: error'),
+            'QQ 用户目录被占用':('SingletonLock','ProcessSingleton','profile appears to be in use'),
+            '运行文件缺失':('No such file or directory','cannot open shared object file'),
+            '系统拒绝执行或访问':('Permission denied','Operation not permitted'),
+            '图形进程不可用':("GPU process isn't usable",'GPU process exited unexpectedly'),
+            '端口已被占用':('EADDRINUSE','Address already in use'),
+        }
+        text=''
+        for name in ('napcat.log','runtime.log','mobile-panel.log'):
+            file=self.home/'data'/name
+            if file.is_file():
+                with file.open('rb')as f:
+                    f.seek(max(0,file.stat().st_size-32768))
+                    text+=f.read(32768).decode('utf-8','replace')+'\n'
+        return {'ok':True,'recent_flags':[label for label,terms in patterns.items() if any(term in text for term in terms)]}
+
     def save_basic(self, fields):
         allowed={'login_uin','owner_qq','bot_name','owner_name','allow_users','allow_groups','weather_home_city'}
         changes={}
@@ -196,6 +214,7 @@ def server(control,port=None):
             route=urllib.parse.urlsplit(self.path).path
             try:
                 if route=='/api/status':return self.response(200,control.status())
+                if route=='/api/qqdiagnostic':return self.response(200,control.qq_diagnostics())
                 if route=='/api/urls':return self.response(200,control.urls())
                 if route=='/api/asr':return self.response(200,control.asr_status())
                 if route=='/api/privacy':return self.response(200,control.privacy())

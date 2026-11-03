@@ -11,6 +11,8 @@ import cover
 cover.allowed=lambda *args,**kwargs:False
 cover.capability_prompt=lambda *args,**kwargs:'手机版当前不提供原电脑的翻唱服务；普通点歌和歌曲分享仍可用，不要声称正在翻唱。'
 import main
+from mobile_hook import handler_for
+main.HookHandler=handler_for(main)
 
 if __name__ == '__main__':
     main.Bot().start()

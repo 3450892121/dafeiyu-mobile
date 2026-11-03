@@ -260,6 +260,15 @@ class RuntimeTests(unittest.TestCase):
             with self.assertRaises(ValueError):self.control.action(command)
         self.control.panel_request.assert_not_called()
 
+    def test_qq_start_diagnostic_returns_only_fixed_categories(self):
+        (self.home/'data/napcat.log').write_text('xvfb-run: error: Xvfb failed to start\nfictional-private-token=do-not-return\n',encoding='utf-8')
+        result=self.control.qq_diagnostics()
+        self.assertEqual(result,{'ok':True,'recent_flags':['虚拟屏幕启动失败']})
+        self.assertNotIn('do-not-return',json.dumps(result))
+
+    def test_missing_qq_log_is_not_reported_as_a_startup_success(self):
+        self.assertEqual(self.control.qq_diagnostics(),{'ok':True,'recent_flags':[]})
+
     def test_omitted_desktop_backend_is_never_contacted_even_for_status(self):
         with patch('urllib.request.urlopen',side_effect=AssertionError('No desktop backend probes'))as connection:
             self.assertFalse(mobile_console.panel._cover_online(self.cfg))
