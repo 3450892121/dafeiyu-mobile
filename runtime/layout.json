@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "ports": {"control":33110,"onebot":33111,"qqWebui":33112,"webhook":33113,"panel":33114},
+  "host":"127.0.0.1",
+  "home":"/home/mobile",
+  "install":"/opt/mobile",
+  "architecture":"arm64-v8a",
+  "targetSdk":28,
+  "minSdk":26
+}

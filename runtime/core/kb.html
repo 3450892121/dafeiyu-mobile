@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<title>大肥鱼 · 知识库</title>
+<script>
+(function(){
+  const theme = new URLSearchParams(location.hash.slice(1)).get('theme') || new URLSearchParams(location.search).get('theme') || (localStorage.getItem('hybrid-theme') || 'light');
+  document.documentElement.classList.toggle('light', theme === 'light');
+  if (theme === 'light' || theme === 'dark') { try { localStorage.setItem('hybrid-theme', theme); } catch (_) {} }
+})();
+</script>
+<style>
+:root{--bg:#0f1520;--card:#182233;--line:#243248;--text:#e7eefc;--dim:#8ea3c2;--acc:#4ea1ff;--ok:#35d07f;--bad:#ff5d5d;--warn:#ffc857}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Microsoft YaHei",sans-serif;font-size:14px}
+header{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:#121a27;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+h1{font-size:18px;margin:0}header a{color:var(--acc);text-decoration:none;margin-left:auto}
+main{max-width:1180px;margin:0 auto;padding:18px 22px 60px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.card .k{color:var(--dim);font-size:12px;margin-bottom:8px}.card .v{font-size:20px;font-weight:700}.card .s{color:var(--dim);font-size:12px;margin-top:6px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{background:var(--acc);border:0;color:#04101f;padding:7px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+button.ghost{background:#22304a;color:var(--text)}button.danger{background:#7a2c2c;color:#ffe7e7}button.sm{padding:5px 9px;font-size:12px}
+input[type=text],select{background:#0f1520;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px;font-size:13px}
+#q{flex:1;min-width:200px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#0f1520;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--text)}
+.chip.on{border-color:var(--acc);background:#16263f;color:#cfe4ff}
+.hint{color:var(--dim);font-size:12px;line-height:1.7}
+.topic-head{margin:18px 0 8px;color:var(--dim);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.topic-head .n{color:var(--acc)}
+.doc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+.doc h3{margin:0 0 6px;font-size:15px;line-height:1.45}
+.doc .sum{color:#cfe4ff;line-height:1.6;margin:4px 0 8px}
+.doc ol{margin:6px 0 8px;padding-left:20px;line-height:1.75}
+.doc li{margin-bottom:2px}
+.tags{margin:6px 0}.tag{display:inline-block;background:#0f1520;border:1px solid var(--line);border-radius:6px;color:var(--dim);font-size:11px;padding:2px 7px;margin:0 5px 5px 0}
+.meta{color:var(--dim);font-size:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.meta a{color:var(--acc);text-decoration:none}
+.badge{background:#0f1520;border:1px solid var(--line);border-radius:6px;font-size:11px;padding:2px 7px;color:var(--dim)}
+.stars{color:var(--warn);letter-spacing:1px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line)}
+.empty{padding:28px;text-align:center;color:var(--dim);line-height:1.9}
+
+html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;--acc:#397bd0;--ok:#168552;--bad:#c73535;--warn:#a86a00;color-scheme:light}
+html.light header{background:#fff}
+html.light input[type=text],html.light select,html.light .chip,html.light .tag,html.light .badge{background:#f2f4fb}
+html.light .chip.on{background:#e3edfa;color:#285a93}
+html.light .doc .sum{color:#344c70}
+html.light button.ghost{background:#e5eaf5}
+</style></head><body>
+<header><h1>大肥鱼 · 知识库</h1><span class="hint" id="st"></span><a href="/">返回主面板</a></header>
+<main>
+  <div class="cards">
+    <div class="card"><div class="k">资料总数</div><div class="v" id="cTotal">—</div><div class="s" id="cKind"></div></div>
+    <div class="card"><div class="k">分类</div><div class="v" id="cTopic">—</div><div class="s">按主题分组</div></div>
+    <div class="card"><div class="k">最近更新</div><div class="v" id="cNew" style="font-size:15px">—</div><div class="s">看视频/入库会自动整理</div></div>
+    <div class="card"><div class="k">被用过</div><div class="v" id="cHits">—</div><div class="s">检索命中次数合计</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <input type="text" id="q" placeholder="搜标题 / 一句话 / 要点 / 标签…">
+      <button onclick="load()">搜索</button>
+      <button class="ghost" onclick="clearSearch()">清空</button>
+      <button class="ghost" onclick="load()">刷新</button>
+    </div>
+    <div class="row" id="chips" style="margin-top:10px"></div>
+    <div class="hint" id="msg" style="margin-top:8px">知识库会自动收两类东西：刷视频时学到的东西（只留有干货的）和你在私聊里说「入库」发来的资料。这里可以改分类、调质量、删掉没用的。</div>
+  </div>
+
+  <div id="list"></div>
+</main>
+<script>
+const TOPICS = ["AI与工具","电脑与网络","学习与效率","生活与美食","音乐与影视","游戏","健康","人际与情绪","我的资料","其他"];
+const KIND = {video:"视频", material:"资料", note:"手记", doc:"资料"};
+let curTopic = "";
+let docs = [];
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function fmt(ts){if(!ts)return "—";const d=new Date(ts*1000);const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());}
+function stars(n){n=Math.max(0,Math.min(5,parseInt(n||0)));return "★".repeat(n)+"☆".repeat(5-n);}
+function titleOf(d){let n=d.name||"";const m=n.match(/^【[^】]*】/);if(m)n=n.slice(m[0].length);return n||"(没标题)";}
+
+async function load(){
+  const q = document.getElementById("q").value.trim();
+  const url = "/api/kb?action=list&q="+encodeURIComponent(q)+(curTopic?("&topic="+encodeURIComponent(curTopic)):"");
+  const r = await fetch(url, {credentials:"same-origin"});
+  const data = await r.json();
+  if(!data.ok){ document.getElementById("msg").textContent = data.error || "读取失败"; return; }
+  docs = data.docs || [];
+  renderStats(data.stats, docs);
+  renderChips(data.stats);
+  renderList();
+}
+
+function renderStats(st, list){
+  st = st || {};
+  document.getElementById("cTotal").textContent = (st.total!=null? st.total : list.length);
+  const kinds = st.kinds || {};
+  document.getElementById("cKind").textContent = Object.keys(kinds).map(k=>KIND[k]||k).join(" / ") || " ";
+  document.getElementById("cTopic").textContent = (st.topics||[]).length;
+  document.getElementById("cNew").textContent = fmt(st.newest);
+  let hits = 0; list.forEach(d=>hits += (d.hits||0));
+  document.getElementById("cHits").textContent = hits;
+}
+
+function renderChips(st){
+  const box = document.getElementById("chips");
+  const counts = {};
+  (st && st.topics || []).forEach(([t,n])=>counts[t]=n);
+  let html = '<span class="chip'+(curTopic?"":" on")+'" onclick="pick(\'\')">全部</span>';
+  TOPICS.forEach(t=>{
+    const n = counts[t]||0;
+    if(!n && curTopic!==t) return;
+    html += '<span class="chip'+(curTopic===t?" on":"")+'" onclick="pick(\''+esc(t)+'\')">'+esc(t)+' <b>'+n+'</b></span>';
+  });
+  box.innerHTML = html;
+}
+
+function pick(t){ curTopic = t; load(); }
+function clearSearch(){ document.getElementById("q").value=""; curTopic=""; load(); }
+
+function renderList(){
+  const box = document.getElementById("list");
+  if(!docs.length){
+    box.innerHTML = '<div class="panel empty">还没有资料。<br>让它刷一会儿视频，或者在私聊里发个文件说「入库」，卡片会出现在这里。</div>';
+    return;
+  }
+  const by = {};
+  docs.forEach(d=>{ (by[d.topic||"其他"] ||= []).push(d); });
+  const order = TOPICS.filter(t=>by[t]).concat(Object.keys(by).filter(t=>!TOPICS.includes(t)));
+  let html = "";
+  order.forEach(t=>{
+    const arr = by[t].sort((a,b)=>(b.updated_at||0)-(a.updated_at||0));
+    html += '<div class="topic-head">'+esc(t)+' <span class="n">'+arr.length+'</span></div>';
+    arr.forEach(d=>{ html += docHtml(d); });
+  });
+  box.innerHTML = html;
+}
+
+function docHtml(d){
+  const pts = d.points||[];
+  const tags = (d.tags||"").split("、").filter(Boolean);
+  const src = d.source||"";
+  const isUrl = /^https?:\/\//i.test(src);
+  return '<div class="doc" data-id="'+d.id+'">'
+    + '<h3>'+esc(titleOf(d))+'</h3>'
+    + '<div class="sum">'+esc(d.summary||"")+'</div>'
+    + (pts.length? '<ol>'+pts.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ol>' : '')
+    + (tags.length? '<div class="tags">'+tags.map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>' : '')
+    + '<div class="meta">'
+    + '<span class="badge">'+(KIND[d.kind]||esc(d.kind||"资料"))+'</span>'
+    + '<span class="badge">'+esc(d.topic||"其他")+'</span>'
+    + '<span class="stars" title="质量分">'+stars(d.quality)+'</span>'
+    + '<span>'+fmt(d.updated_at||d.created_at)+'</span>'
+    + '<span>用过 '+(d.hits||0)+' 次</span>'
+    + (isUrl? '<a href="'+esc(src)+'" target="_blank" rel="noopener">原链接</a>' : (src? '<span>'+esc(src)+'</span>':''))
+    + '</div>'
+    + '<div class="acts">'
+    + '<select onchange="setField('+d.id+',\'topic\',this.value)">'+TOPICS.map(t=>'<option value="'+esc(t)+'"'+(t===(d.topic||"其他")?" selected":"")+'>'+esc(t)+'</option>').join('')+'</select>'
+    + '<button class="ghost sm" onclick="setField('+d.id+',\'quality\',5)">标为精华</button>'
+    + '<button class="ghost sm" onclick="setField('+d.id+',\'quality\',3)">普通</button>'
+    + '<button class="ghost sm" onclick="setField('+d.id+',\'quality\',1)">降级</button>'
+    + '<button class="danger sm" onclick="del('+d.id+',\''+esc(titleOf(d)).replace(/'/g,"")+'\')">删除</button>'
+    + '</div></div>';
+}
+
+async function post(obj){
+  const body = new URLSearchParams(obj).toString();
+  const r = await fetch("/api/kb", {method:"POST", credentials:"same-origin",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"}, body});
+  return await r.json();
+}
+
+async function setField(id, key, val){
+  const o = {action:"set", id:id}; o[key]=val;
+  const res = await post(o);
+  if(!res.ok){ alert(res.error||"没改成功"); return; }
+  load();
+}
+
+async function del(id, name){
+  if(!confirm("删掉这条知识？《"+name+"》删了就找不回来了。")) return;
+  const res = await post({action:"delete", id:id});
+  if(!res.ok){ alert(res.error||"没删掉"); return; }
+  load();
+}
+
+document.getElementById("q").addEventListener("keydown", e=>{ if(e.key==="Enter") load(); });
+load();
+</script>
+</body></html>

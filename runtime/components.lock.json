@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "components": [
+    {
+      "name": "libandroid-shmem",
+      "version": "0.7",
+      "url": "https://packages.termux.dev/apt/termux-main/pool/main/liba/libandroid-shmem/libandroid-shmem_0.7_aarch64.deb",
+      "sha256": "0da3a24d558b93c92bcf8d611e0826a99ff96e396b148e6cdf33b47c47c57ff6",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "libtalloc",
+      "version": "2.5.0",
+      "url": "https://packages.termux.dev/apt/termux-main/pool/main/libt/libtalloc/libtalloc_2.5.0_aarch64.deb",
+      "sha256": "556591f43bb773ad8777e1a29522640866a55f95dab71914418b94a8c58ad5a7",
+      "license": "LGPL-3.0-or-later (library); GPL-3.0 (package/build files)"
+    },
+    {
+      "name": "proot",
+      "version": "5.1.107.102",
+      "url": "https://packages.termux.dev/apt/termux-main/pool/main/p/proot/proot_5.1.107.102_aarch64.deb",
+      "sha256": "10a394b585c2fc2b2c8502544f4e5f1be581dc8bfff79e8ba62f16207423e030",
+      "license": "GPL-2.0-or-later"
+    },
+    {
+      "name": "ubuntu-base-arm64",
+      "version": "24.04.5",
+      "sha256": "a91d5a93010193712d346d761372b7c9db6dfcf093893161c64ca107f05914f2",
+      "size": 29936675,
+      "source": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.5-base-arm64.tar.gz"
+    }
+  ],
+  "nativeFiles": [
+    {
+      "file": "libandroid-shmem.so",
+      "sha256": "84475798e07c8174dbbfaec70a827fdb02f19ffa69a589380c13e7507fd0e731",
+      "size": 14432
+    },
+    {
+      "file": "libproot-loader.so",
+      "sha256": "1da54355333cca3fb6ee10e3b82a24df24fb230c99241ce83809bf9e240609b5",
+      "size": 18136
+    },
+    {
+      "file": "libproot.so",
+      "sha256": "3621937c1c5a98d0d39ca599af573a6bc15128690606d535e8b05da00cec4f41",
+      "size": 259832
+    },
+    {
+      "file": "libtalloc.so",
+      "sha256": "742b438c4d09e276985a61d44164c9de207b6d8cc268f3018cb3001961bcb309",
+      "size": 33592
+    }
+  ]
+}

@@ -30,6 +30,7 @@ export function validateCatalogue(catalogue) {
     if (feature.requirement !== expected) errors.push('未经授权改变功能范围：' + feature.id);
     if (feature.status === 'omitted' && (!optionalIds.has(feature.id) || !feature.omissionReason)) errors.push('省略缺少授权或理由：' + feature.id);
     if (feature.status === 'verified' && !feature.verificationEvidence) errors.push('验收缺少证据：' + feature.id);
+    if (feature.status === 'implemented' && (!feature.implementation?.length || !feature.offlineTests?.length)) errors.push('实现缺少源码或隔离证据：' + feature.id);
     if (!Array.isArray(feature.sources) || !feature.sources.length || !feature.evidence) errors.push('缺少来源或验收方法：' + feature.id);
     for (const source of feature.sources ?? []) {
       if (typeof source !== 'string' || source.includes('..') || source.includes('\\') || !/^(02-服务器版\/|07-翻唱\/)/.test(source))
@@ -44,7 +45,7 @@ export function publicCatalogue(catalogue) {
   return {
     schemaVersion: catalogue.schemaVersion,
     statusLabels: catalogue.statusLabels,
-    features: catalogue.features.map(({ id, name, status, requirement, module }) => ({ id, name, status, requirement, module })),
+    features: catalogue.features.map(({ id, name, status, requirement, module, omissionReason }) => ({ id, name, status, requirement, module, ...(omissionReason?{omissionReason}:{}) })),
   };
 }
 

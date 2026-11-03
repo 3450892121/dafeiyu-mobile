@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<title>大肥鱼 · 刷视频</title>
+<script>
+(function(){
+  const theme = new URLSearchParams(location.hash.slice(1)).get('theme') || new URLSearchParams(location.search).get('theme') || (localStorage.getItem('hybrid-theme') || 'light');
+  document.documentElement.classList.toggle('light', theme === 'light');
+  if (theme === 'light' || theme === 'dark') { try { localStorage.setItem('hybrid-theme', theme); } catch (_) {} }
+})();
+</script>
+<style>
+:root{--bg:#0f1520;--card:#182233;--line:#243248;--text:#e7eefc;--dim:#8ea3c2;--acc:#4ea1ff;--ok:#35d07f;--bad:#ff5d5d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Microsoft YaHei",sans-serif;font-size:14px}
+header{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:#121a27;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+h1{font-size:18px;margin:0}header a{color:var(--acc);text-decoration:none;margin-left:auto}
+main{max-width:1180px;margin:0 auto;padding:18px 22px 50px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}.card .k{color:var(--dim);font-size:12px;margin-bottom:8px}.card .v{font-size:20px;font-weight:700}.card .s{color:var(--dim);font-size:12px;margin-top:6px}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px}
+.setting-group{border:1px solid var(--line);border-radius:12px;padding:12px;background:#121a27}
+.setting-group h3{font-size:13px;color:var(--text);margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin:10px 0}
+.model-item{display:flex;align-items:flex-start;gap:8px;background:#0f1520;border:1px solid var(--line);border-radius:9px;padding:9px;color:var(--text);font-size:13px;cursor:pointer}
+.model-item input{width:auto;margin-top:2px}.model-item span{display:flex;flex-direction:column;gap:2px;min-width:0}.model-item small{color:var(--dim);font-size:11px;word-break:break-all}
+.model-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.model-actions select{max-width:340px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}.panel h2{font-size:14px;color:var(--dim);font-weight:600;margin:0 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.row button{margin:0}
+button{background:var(--acc);border:0;color:#04101f;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}button.ghost{background:#22304a;color:var(--text)}button.danger{background:#7a2c2c;color:#ffe7e7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+label{display:block;color:var(--dim);font-size:12px;margin:8px 0 4px}input[type=text],input[type=number],textarea,select{width:100%;background:#0f1520;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px;font-size:13px}textarea{min-height:64px;resize:vertical}
+.chk{display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px;margin:8px 0}.chk input{width:auto}
+.hint{color:var(--dim);font-size:12px;line-height:1.6}.ok{color:var(--ok)}.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:6px;border-bottom:1px solid var(--line)}th{color:var(--dim);font-weight:500}
+pre{white-space:pre-wrap;word-break:break-word;background:#0f1520;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--text);font-size:12px;line-height:1.6}
+.bar{height:10px;background:#0f1520;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4ea1ff,#35d07f);transition:width .4s}
+
+html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;--acc:#397bd0;--ok:#168552;--bad:#c73535;color-scheme:light}
+html.light header,html.light .setting-group{background:#fff}
+html.light .model-item,html.light input[type=text],html.light input[type=number],html.light textarea,html.light select,html.light pre,html.light .bar{background:#f2f4fb}
+html.light button.ghost{background:#e5eaf5}
+</style></head><body>
+<header><h1>大肥鱼 · 刷视频</h1><span id="st" class="hint"></span><a href="/">返回主面板</a></header>
+<main>
+  <div class="cards">
+    <div class="card"><div class="k">本轮</div><div class="v" id="cRun">—</div><div class="s" id="cRunS"></div></div>
+    <div class="card"><div class="k">今日已看</div><div class="v" id="cToday">—</div><div class="s">今天看完的视频条数</div></div>
+    <div class="card"><div class="k">今日分钟</div><div class="v" id="cMin">—</div><div class="s" id="cMinS"></div></div>
+    <div class="card"><div class="k">今日分享</div><div class="v" id="cShare">—</div><div class="s" id="cShareS"></div></div>
+    <div class="card"><div class="k">今日评论</div><div class="v" id="cCmt">—</div><div class="s" id="cCmtS"></div></div>
+    <div class="card"><div class="k">今日 Token</div><div class="v" id="cTok">—</div><div class="s" id="cTokS">刷视频模型用量</div></div>
+    <div class="card"><div class="k">主动额度剩余</div><div class="v" id="cPro">—</div><div class="s">视频分享占主动聊天额度</div></div>
+    <div class="card"><div class="k">成长</div><div class="v" id="cGrow">—</div><div class="s" id="cGrowS"></div></div>
+    <div class="card"><div class="k">B 站账号</div><div class="v" id="cBili">—</div><div class="s" id="cBiliS"></div></div>
+  </div>
+
+  <div class="panel"><h2>本轮进度</h2>
+    <div id="runHead" class="hint">现在没在刷。</div>
+    <div class="bar"><i id="runBar"></i></div>
+    <div id="runNow" class="hint"></div>
+  </div>
+
+  <div class="panel"><h2>今天刷过的视频</h2><div id="histBox" class="hint">今天还没刷完一条。</div></div>
+
+  <div class="panel"><h2>立即操作</h2>
+    <div class="row">
+      <button onclick="act('start',10)">立即刷 10 分钟</button>
+      <button onclick="act('start',20)">20 分钟</button>
+      <button onclick="act('start',30)">30 分钟</button>
+      <button class="danger" onclick="act('stop')">停止</button>
+      <button class="ghost" data-legacy-growth onclick="act('growth_rebuild')">重新生成成长档案</button>
+      <button class="ghost" data-legacy-growth onclick="act('growth_rollback')">回滚上一版档案</button>
+      <button class="ghost" onclick="act('clear_comment_block')">清除评论限制</button>
+    </div>
+    <div class="hint" id="actMsg">手动命令会绕过允许时段，但仍受每日分钟/分享/评论额度限制。点「停止」后，当前这条视频收尾完就停（一般 1 分钟内）；空闲时开新一轮最多 10 秒。</div>
+    <div id="planBox" class="hint"></div>
+  </div>
+
+  <div class="panel" id="modelPanel">
+    <h2>刷视频使用哪些模型</h2>
+    <div class="hint">直接勾选要用的模型；不勾 = 总池全部。只会在勾选模型里按优先顺序尝试，失败不会偷偷换未勾选的模型。</div>
+    <div id="modelPick" class="model-grid"></div>
+    <div class="model-actions">
+      <label style="margin:0">优先模型</label>
+      <select id="vbModelPriority"></select>
+      <button type="button" class="ghost" onclick="setAllModels(true)">全选</button>
+      <button type="button" class="ghost" onclick="setAllModels(false)">清空</button>
+      <span class="hint" id="modelHint">加载中…</span>
+    </div>
+  </div>
+
+  <form id="cfg" class="panel" onsubmit="saveCfg(event)">
+    <h2>控制台设置</h2>
+    <div class="settings-grid">
+      <div class="setting-group">
+        <h3>定时与额度</h3>
+        <div class="chk"><input type="checkbox" name="video_browse_enabled" id="video_browse_enabled"> 开启定时刷视频</div>
+        <div class="chk"><input type="checkbox" name="video_browse_notify" id="video_browse_notify"> 刷视频通知（开始/结束/额度用完）</div>
+        <label>允许时段（每行一段，HH:MM-HH:MM；可多段）</label>
+        <textarea name="video_browse_windows" id="video_browse_windows" placeholder="12:30-14:00&#10;20:00-23:00"></textarea>
+        <label>开始随机范围（分钟，0~240）</label>
+        <input type="number" name="video_browse_start_jitter_min" id="video_browse_start_jitter_min" min="0" max="240">
+        <label>单次时长（分钟）</label>
+        <div class="row"><input type="number" name="video_browse_duration_min" id="video_browse_duration_min" min="1" max="180" style="flex:1"><span>~</span><input type="number" name="video_browse_duration_max" id="video_browse_duration_max" min="1" max="180" style="flex:1"></div>
+        <label>每天自动刷几次</label>
+        <input type="number" name="video_browse_sessions_per_day" id="video_browse_sessions_per_day" min="0" max="12">
+        <label>每天最多刷多少分钟</label>
+        <input type="number" name="video_browse_max_minutes_per_day" id="video_browse_max_minutes_per_day" min="0" max="300">
+        <label>每天刷视频 token 上限（0=不限；用完当天停刷，通知开启时私聊告诉你）</label>
+        <input type="number" name="video_browse_daily_token_limit" id="video_browse_daily_token_limit" min="0" max="1000000000" step="1000">
+        <label>手动单次最多分钟</label>
+        <input type="number" name="video_browse_manual_max_min" id="video_browse_manual_max_min" min="1" max="180">
+      </div>
+      <div class="setting-group">
+        <h3>看片与互动</h3>
+        <div class="chk"><input type="checkbox" name="video_browse_like" id="video_browse_like"> 点赞</div>
+        <div class="chk"><input type="checkbox" name="video_browse_fav" id="video_browse_fav"> 收藏（有评论/值得回看才收）</div>
+        <label>每天最多分享（计入主动额度）</label>
+        <input type="number" name="video_browse_share_max_per_day" id="video_browse_share_max_per_day" min="0" max="6">
+        <label>分享评分门槛（1~5）</label>
+        <input type="number" name="video_browse_share_score_min" id="video_browse_share_score_min" min="1" max="5">
+        <label>每天最多评论@</label>
+        <input type="number" name="video_browse_comment_max_per_day" id="video_browse_comment_max_per_day" min="0" max="10">
+        <div class="chk"><input type="checkbox" name="video_browse_reply_owner" id="video_browse_reply_owner"> 回复主人（默认开）</div>
+        <div class="chk"><input type="checkbox" name="video_browse_reply_strangers" id="video_browse_reply_strangers"> 回复陌生人（默认关）</div>
+        <label>回复主人上限/天</label>
+        <input type="number" name="video_browse_reply_owner_max_per_day" id="video_browse_reply_owner_max_per_day" min="0" max="50">
+        <label>回复陌生人上限/天</label>
+        <input type="number" name="video_browse_reply_stranger_max_per_day" id="video_browse_reply_stranger_max_per_day" min="0" max="50">
+        <label>回复轮询间隔（分钟）</label>
+        <input type="number" name="video_browse_reply_poll_min" id="video_browse_reply_poll_min" min="1" max="1440">
+      </div>
+      <div class="setting-group">
+        <h3>搜索与成长</h3>
+        <label>搜索关键词（每行一个，可多个；和推荐流混合）</label>
+        <textarea name="video_browse_keywords" id="video_browse_keywords" placeholder="AI&#10;数码&#10;沟通技巧"></textarea>
+        <label>搜索占比（0~100）</label>
+        <input type="number" name="video_browse_search_ratio" id="video_browse_search_ratio" min="0" max="100">
+        <div class="chk"><input type="checkbox" name="video_browse_growth_enabled" id="video_browse_growth_enabled"> 将观看经历用于成长</div>
+        <label data-legacy-growth>成长目标（逗号分隔）</label>
+        <input data-legacy-growth type="text" name="video_browse_growth_goals" id="video_browse_growth_goals">
+        <div class="chk"><input type="checkbox" name="video_browse_kb_enabled" id="video_browse_kb_enabled"> 整理知识库卡片（推荐开）</div>
+        <label>知识库价值门槛（0~5，低于这个分不存；3=只留有干货的）</label>
+        <input type="number" name="video_browse_kb_min_worth" id="video_browse_kb_min_worth" min="0" max="5">
+        <label>知识库最多留几份（超了按质量淘汰）</label>
+        <input type="number" name="video_browse_kb_keep" id="video_browse_kb_keep" min="20" max="2000">
+        <label data-legacy-growth>每次最多学几条</label>
+        <input data-legacy-growth type="number" name="video_browse_growth_learn_max" id="video_browse_growth_learn_max" min="0" max="5">
+        <label data-legacy-growth>最多生效成长条数</label>
+        <input data-legacy-growth type="number" name="video_browse_growth_max_active" id="video_browse_growth_max_active" min="1" max="200">
+        <label>点赞上限/天</label>
+        <input type="number" name="video_browse_like_max_per_day" id="video_browse_like_max_per_day" min="0" max="50">
+        <label>收藏上限/天</label>
+        <input type="number" name="video_browse_fav_max_per_day" id="video_browse_fav_max_per_day" min="0" max="50">
+      </div>
+      <div class="setting-group">
+        <h3>账号与安全</h3>
+        <label>主人 B 站 UID（不是 QQ 号）</label>
+        <input type="number" name="video_browse_bili_owner_uid" id="video_browse_bili_owner_uid" min="0">
+        <label>小号 B 站 UID（防止回复自己）</label>
+        <input type="number" name="video_browse_bili_self_mid" id="video_browse_bili_self_mid" min="0">
+        <div class="hint">评论/回复会走公开内容护栏；@ 校验不过会自动删除。出问题先看顶部提示或日志。</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px"><button type="submit">保存设置</button><span class="hint" id="saveMsg"></span></div>
+  </form>
+
+  <div class="panel"><h2>今天什么时候刷（随机计划）</h2><div id="planTable" class="hint">还没有计划。</div></div>
+  <div class="panel"><h2 id="profileTitle">当前自我</h2><pre id="profile">读取中。</pre><div class="hint" id="report"></div></div>
+</main>
+<script>
+const BOOLS=["video_browse_enabled","video_browse_notify","video_browse_like","video_browse_fav","video_browse_reply_owner","video_browse_reply_strangers","video_browse_growth_enabled","video_browse_kb_enabled"];
+const INTS=["video_browse_search_ratio","video_browse_start_jitter_min","video_browse_duration_min","video_browse_duration_max","video_browse_sessions_per_day","video_browse_max_minutes_per_day","video_browse_daily_token_limit","video_browse_manual_max_min","video_browse_share_max_per_day","video_browse_share_score_min","video_browse_comment_max_per_day","video_browse_reply_owner_max_per_day","video_browse_reply_stranger_max_per_day","video_browse_reply_poll_min","video_browse_bili_owner_uid","video_browse_bili_self_mid","video_browse_growth_learn_max","video_browse_growth_max_active","video_browse_kb_min_worth","video_browse_kb_keep","video_browse_like_max_per_day","video_browse_fav_max_per_day"];
+const STRS=["video_browse_windows","video_browse_keywords","video_browse_growth_goals"];
+let loaded=false;
+const $=s=>document.querySelector(s);
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function hm(ts){try{return new Date(ts*1000).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}}
+function fmtDur(s){s=Math.max(0,Math.round(s||0));const m=Math.floor(s/60),r=s%60;return m?(m+"分"+(r?r+"秒":"")):(r+"秒");}
+function renderRun(st){
+  const now=Math.floor(Date.now()/1000);
+  if(!st.running){
+    $("#cRun").textContent="空闲"; $("#cRunS").textContent="";
+    $("#runHead").textContent="现在没在刷。"; $("#runBar").style.width="0%"; $("#runNow").textContent="";
+    return;
+  }
+  const planned=Math.max(1, st.minutes||1);
+  const used=Math.max(0, now-(st.started||now));
+  const left=Math.max(0, (st.deadline||0)-now);
+  const cur=st.current||{};
+  $("#cRun").textContent=st.stop_requested?"正在停…":"刷着";
+  $("#cRunS").textContent=(st.source==="scheduled"?"定时":"手动")+" · 已看 "+(st.watched||0)+" 条 · 还剩 "+Math.ceil(left/60)+" 分钟";
+  $("#runHead").textContent="计划 "+planned+" 分钟，已过 "+Math.floor(used/60)+" 分钟，还剩 "+Math.ceil(left/60)+" 分钟；本轮已看 "+(st.watched||0)+" 条。"+(st.stop_requested?"已收到停止，当前这条收尾后停。":"");
+  $("#runBar").style.width=Math.min(100, Math.round(used*100/(planned*60)))+"%";
+  if(cur.bvid){
+    let s="正在看《"+esc(cur.title||cur.bvid)+"》";
+    if(cur.stage) s+=" · "+esc(cur.stage);
+    if((cur.total||0)>0) s+=" "+(cur.done||0)+"/"+cur.total;
+    s+="（已 "+(now-(cur.t0||now))+" 秒）";
+    $("#runNow").innerHTML=s;
+  }else{
+    $("#runNow").textContent="正在挑下一条…";
+  }
+}
+function renderHist(rows){
+  rows=rows||[];
+  $("#histBox").innerHTML=rows.length?("<table><thead><tr><th>时间</th><th>标题</th><th>时长</th><th>画面</th><th>来源</th></tr></thead><tbody>"+rows.map(x=>"<tr><td>"+hm(x.ts)+"</td><td>"+esc(x.title)+"</td><td>"+fmtDur(x.duration)+"</td><td>"+(x.frames||0)+" 帧</td><td>"+(x.source==="scheduled"?"定时":"手动")+"</td></tr>").join("")+"</tbody></table>"):"今天还没刷完一条。";
+}
+function fill(cfg){BOOLS.forEach(k=>{const el=document.getElementById(k);if(el)el.checked=!!cfg[k];});INTS.forEach(k=>{const el=document.getElementById(k);if(el)el.value=cfg[k]??0;});STRS.forEach(k=>{const el=document.getElementById(k);if(el)el.value=cfg[k]??"";});}
+function checkedModels(){return [...document.querySelectorAll("#modelPick input[type=checkbox]:checked")].map(x=>x.value);}
+function updatePriority(prefer){
+  const sel=document.getElementById("vbModelPriority"); if(!sel)return;
+  const cur=(prefer!==undefined?prefer:(sel.value||""));
+  const ids=checkedModels();
+  if(!ids.length){sel.innerHTML='<option value="">先勾选模型</option>';sel.disabled=true;return;}
+  sel.disabled=false;
+  sel.innerHTML='<option value="">按勾选顺序</option>'+ids.map(id=>{const m=(window._vbModels||[]).find(x=>x.id===id)||{};return '<option value="'+esc(id)+'">'+esc(m.label||id)+'</option>';}).join("");
+  sel.value=ids.includes(cur)?cur:"";
+}
+function renderModels(models,cfg){
+  window._vbModels=models||[];
+  const box=document.getElementById("modelPick"); if(!box)return;
+  const raw=String((cfg&&cfg.video_browse_model_ids)||"");
+  const ids=raw.split(/[,，;；\n]+/).map(x=>x.trim()).filter(Boolean);
+  const pri=(cfg&&cfg.video_browse_model_priority)||"";
+  if(!window._vbModels.length){box.innerHTML='<div class="hint">没有可用模型。</div>';updatePriority("");return;}
+  box.innerHTML=window._vbModels.map(m=>'<label class="model-item"><input type="checkbox" value="'+esc(m.id)+'"'+(ids.includes(m.id)?" checked":"")+' onchange="updatePriority()"><span><b>'+esc(m.label||m.id)+'</b><small>'+esc(m.id)+'</small></span></label>').join("");
+  updatePriority(pri);
+  const hint=document.getElementById("modelHint");
+  if(hint) hint.textContent=checkedModels().length?("已勾选 "+checkedModels().length+" 个模型"):"未勾选：使用总池全部模型";
+}
+function setAllModels(on){
+  document.querySelectorAll("#modelPick input[type=checkbox]").forEach(x=>x.checked=!!on);
+  updatePriority("");
+  const hint=document.getElementById("modelHint");
+  if(hint) hint.textContent=on?"已全选当前模型池":"未勾选：使用总池全部模型";
+}
+async function load(initial){
+  try{
+    const r=await fetch("/api/video_browse",{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status);
+    const d=await r.json();
+    // 只在首次加载/保存后渲染模型勾选；5 秒轮询不能把用户还没保存的勾选重置掉。
+    if(initial){ renderModels(d.models||[], d.config||{}); fill(d.config||{}); }
+    const st=d.status||{}, t=d.today||{}, cf=d.config||{};
+    const risk=st.risk||{}, cb=st.comment_block||{};
+    renderRun(st);
+    $("#cToday").textContent=(d.watched_today||0)+" 条";
+    renderHist(d.history||[]);
+    if(risk.kind){ $("#st").textContent="B站异常停写："+risk.kind+"（到 "+hm(risk.until)+"）"; $("#st").className="hint bad"; }
+    else if(cb.kind){ $("#st").textContent="评论已停："+cb.kind+"（到 "+hm(cb.until)+"，转正后点“清除评论限制”）"; $("#st").className="hint bad"; }
+    else { $("#st").textContent=""; $("#st").className="hint"; }
+    $("#cMin").textContent=(t.used_minutes||0)+" / "+(cf.video_browse_max_minutes_per_day||0);
+    $("#cMinS").textContent="按计划预扣；提前停会退回";
+    $("#cShare").textContent=(t.shares||0)+" / "+(cf.video_browse_share_max_per_day||0);
+    $("#cShareS").textContent="计入主动额度";
+    $("#cCmt").textContent=(t.comments||0)+" / "+(cf.video_browse_comment_max_per_day||0);
+    $("#cCmtS").textContent="评论都 @ 主人";
+    const tokLim=t.token_limit??cf.video_browse_daily_token_limit??0;
+    $("#cTok").textContent=(t.tokens||0)+(tokLim>0?(" / "+tokLim):"");
+    $("#cTokS").textContent=tokLim>0?"达到后当天停刷":"不限（0）";
+    $("#cPro").textContent=(st.proactive_used??"—")+" 次";
+    $("#cGrow").textContent=st.growth_version?("v"+st.growth_version):"—";
+    $("#cGrowS").textContent="生效 "+(st.growth_count||0)+" 条";
+    const plan=st.plan||[];
+    $("#planBox").innerHTML=plan.length?("今天计划："+plan.map(x=>hm(x.start)+"~"+hm(x.end)+"（"+(x.minutes||0)+"分钟"+(x.started?"，已开始":"")+(x.skipped?"，跳过":"")+"）").join("；")):"今天还没生成计划。";
+    $("#planTable").innerHTML=plan.length?("<table><thead><tr><th>开始</th><th>结束</th><th>分钟</th><th>状态</th></tr></thead><tbody>"+plan.map(x=>"<tr><td>"+hm(x.start)+"</td><td>"+hm(x.end)+"</td><td>"+(x.minutes||0)+"</td><td>"+(x.started?"已开始":x.skipped?"跳过":"待开始")+"</td></tr>").join("")+"</tbody></table>"):"还没有计划。";
+    const prof=d.profile||{}, sec=prof.sections||{};
+    $("#profile").textContent=Object.keys(sec).length?("v"+(prof.version||"?")+"\n看世界："+(sec.world||"")+"\n待人接物："+(sec.people||"")+"\n口味："+(sec.taste||"")+"\n说话："+(sec.voice||"")):"还没有成长档案。";
+    const rep=d.report||{};
+    $("#report").textContent=Object.keys(rep).length?("周复盘：生效 "+(rep.active||0)+"，候选 "+(rep.candidate||0)+"，停用 "+(rep.paused||0)+"，目标 "+(rep.goals||[]).join("、")+"。"):"还没有周复盘。";
+    document.querySelectorAll('[data-legacy-growth]').forEach(el=>{el.hidden=!!d.unified_self;});
+    if(d.unified_self){
+      const current=(prof.items||[]).filter(x=>x.status!=='withdrawn');
+      $("#profileTitle").textContent='和聊天、空间共用的当前自我';
+      $("#profile").textContent=current.map(x=>x.topic+'：'+x.stance).join('\n')||'还在相处和探索。';
+      $("#report").textContent='视频是同一段成长经历。旧视频档案保留为历史；当前变化与依据可在面板「相处中长成的样子」查看。';
+      $("#cGrow").textContent='同一个我';
+      $("#cGrowS").textContent='当前 '+current.length+' 项倾向';
+    }
+    const bl=d.bili||{};
+    $("#cBili").textContent=bl.logged_in?((bl.user||{}).name||"已登录"):(bl.available?"未登录":"不可用");
+    $("#cBiliS").textContent=bl.logged_in?("主人 UID "+(bl.owner_uid||0)):((bl.error||"需要登录时用 bili auth login"));
+    loaded=true;
+  }catch(e){$("#st").textContent="加载失败："+e.message; $("#st").className="bad";}
+}
+async function saveCfg(ev){
+  ev.preventDefault(); const p=new URLSearchParams();
+  BOOLS.forEach(k=>p.set(k,document.getElementById(k)?.checked?"1":"0"));
+  INTS.forEach(k=>p.set(k,document.getElementById(k)?.value||"0"));
+  STRS.forEach(k=>p.set(k,document.getElementById(k)?.value||""));
+  const modelIds=checkedModels();
+  let priority=document.getElementById("vbModelPriority")?.value||"";
+  if(priority && !modelIds.includes(priority)) modelIds.unshift(priority);
+  p.set("video_browse_model_ids", modelIds.join(","));
+  p.set("video_browse_model_priority", priority);
+  $("#saveMsg").textContent="保存中...";
+  try{const r=await fetch("/api/video_browse",{method:"POST",body:p}); const d=await r.json(); if(!d.ok)throw new Error(d.error||"失败"); $("#saveMsg").textContent="已保存"; $("#saveMsg").className="hint ok"; fill(d.config||{}); renderModels(d.models||[],d.config||{}); await load(false);}catch(e){$("#saveMsg").textContent="保存失败："+e.message; $("#saveMsg").className="hint bad";}
+}
+async function act(action,minutes){
+  const p=new URLSearchParams({action}); if(minutes)p.set("minutes",String(minutes));
+  $("#actMsg").textContent="已提交，最多约 30 秒生效...";
+  try{const r=await fetch("/api/video_browse",{method:"POST",body:p}); const d=await r.json(); if(!d.ok)throw new Error(d.error||"失败"); $("#actMsg").textContent=d.message||("已提交："+action+(minutes?" "+minutes+" 分钟":"")); $("#actMsg").className="hint ok"; setTimeout(()=>load(false),800); setTimeout(()=>load(false),6000);}catch(e){$("#actMsg").textContent="提交失败："+e.message; $("#actMsg").className="hint bad";}
+}
+load(true); setInterval(()=>load(false),5000);
+</script>
+</body></html>

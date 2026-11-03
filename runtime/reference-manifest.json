@@ -1,0 +1,411 @@
+{
+  "source": "大肥鱼服务器版",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "admin.py",
+      "source": "02-服务器版/bot/admin.py",
+      "sha256": "a049b8f20739bfece7e367612b315c904bc6b251f7c545708119315fffa85f82"
+    },
+    {
+      "path": "bili_bridge.py",
+      "source": "02-服务器版/bot/bili_bridge.py",
+      "sha256": "490588dc89a11ced39f8398d3e91ffa33436242d46cd132f023c9f57365547e1"
+    },
+    {
+      "path": "billing.py",
+      "source": "02-服务器版/bot/billing.py",
+      "sha256": "5f7c6eb539cb0364a933d1fd2dfe97b34ace44a2e7ae76b37b62ab2095c972ab"
+    },
+    {
+      "path": "blacklist.py",
+      "source": "02-服务器版/bot/blacklist.py",
+      "sha256": "c371e83c40c1c34a828823c44b421cd7d75bd0048ba90bb0465638434b03ea46"
+    },
+    {
+      "path": "bot_rounds.py",
+      "source": "02-服务器版/bot/bot_rounds.py",
+      "sha256": "4654d82aa02b0af1070366b5463a9844a7adbf5b8c68924ed34bbfa9f2b4874a"
+    },
+    {
+      "path": "capabilities.py",
+      "source": "02-服务器版/bot/capabilities.py",
+      "sha256": "eed0dee397f31064c03fb726c005abbcedcf4448da468087b08e29aa50cdfea1"
+    },
+    {
+      "path": "care.py",
+      "source": "02-服务器版/bot/care.py",
+      "sha256": "f68ae9510b74e11e52a92e0c9091aa32159695755d95f0bca1d9d259957a6a3e"
+    },
+    {
+      "path": "common.py",
+      "source": "02-服务器版/bot/common.py",
+      "sha256": "ad906ca73518114b5630065ba2f7003d88d32af374902bb9f0de7741c2d212dc"
+    },
+    {
+      "path": "config.py",
+      "source": "02-服务器版/bot/config.py",
+      "sha256": "df2f761f52de29b7ab5fd474f97d9d46f52797191a21d9b34ca805409e14a948"
+    },
+    {
+      "path": "conversation_understanding.py",
+      "source": "02-服务器版/bot/conversation_understanding.py",
+      "sha256": "9257730c7589e19054713c27992da106a6a5802eab1892537a47c112ca8e57bd"
+    },
+    {
+      "path": "cover.py",
+      "source": "02-服务器版/bot/cover.py",
+      "sha256": "0a5d96b0d40c8bdd945f5f32cdc4a654e9214f642e8a00b1c0f74b6aae7a5df9"
+    },
+    {
+      "path": "dashboard.html",
+      "source": "02-服务器版/bot/dashboard.html",
+      "sha256": "78bfedc52e1b88198d0d12522ee5c9070add99ecd19c8acbf760e9424f2e2805"
+    },
+    {
+      "path": "dreaming.py",
+      "source": "02-服务器版/bot/dreaming.py",
+      "sha256": "00493959287d050b350764125e38106327d7f3308f2cb5fae81b6a437b2d8b3d"
+    },
+    {
+      "path": "flow_companion.py",
+      "source": "02-服务器版/bot/flow_companion.py",
+      "sha256": "6cd4af58a4d24caa768ed795e5b88083402720aebc42ec750d80d8f11e10d6a0"
+    },
+    {
+      "path": "flow_context.py",
+      "source": "02-服务器版/bot/flow_context.py",
+      "sha256": "23b92de6502236088ac563b7b3e1452f469e1630501bcc76f290451e6bf807d6"
+    },
+    {
+      "path": "flow_intent.py",
+      "source": "02-服务器版/bot/flow_intent.py",
+      "sha256": "e94a5e235845dbd6a70bfdd2652b96736a7ff0b8c27dbc6072f588a6e56a1eaa"
+    },
+    {
+      "path": "flow_media.py",
+      "source": "02-服务器版/bot/flow_media.py",
+      "sha256": "e0380f726c6def5d13b8c690bae05aaeac5a7b375053fff75d6c74b1a3cd4b6e"
+    },
+    {
+      "path": "flow_memory.py",
+      "source": "02-服务器版/bot/flow_memory.py",
+      "sha256": "d6b76ad0606b9a8bec70d62cd9edc3878f2adc6bab37720d74eacecfe899d496"
+    },
+    {
+      "path": "flow_proactive.py",
+      "source": "02-服务器版/bot/flow_proactive.py",
+      "sha256": "b50389bed506fb62f05d2d936222e0b1284a05635818b25b863e3aa2f44f7fc4"
+    },
+    {
+      "path": "flow_qzone.py",
+      "source": "02-服务器版/bot/flow_qzone.py",
+      "sha256": "3307abd746ca2d3cdff12518265be0af47ade7cf25936a0e1950163bdd9250c5"
+    },
+    {
+      "path": "flow_qzone_images.py",
+      "source": "02-服务器版/bot/flow_qzone_images.py",
+      "sha256": "22f6656c1816fad51d5a20e508c0efc924aee5e5b467788e118f1c414588955c"
+    },
+    {
+      "path": "flow_reply.py",
+      "source": "02-服务器版/bot/flow_reply.py",
+      "sha256": "687fa07194c8b7f937c870adbd75b8b35a8be1c0c98ceb2e10524020c4619662"
+    },
+    {
+      "path": "flow_stickers.py",
+      "source": "02-服务器版/bot/flow_stickers.py",
+      "sha256": "38b2f2f114948e6168a1e980da1a0df9183c66b787fd8132d1e81b3ea4436725"
+    },
+    {
+      "path": "group_companion_state.py",
+      "source": "02-服务器版/bot/group_companion_state.py",
+      "sha256": "eda402029bd4fdba9d80003a019cd86455f8be447713cb154b4f6c1ebefbfdc8"
+    },
+    {
+      "path": "guard.py",
+      "source": "02-服务器版/bot/guard.py",
+      "sha256": "6d99876ea37722ae220debc88c7927bed297cb8440681c3cf365911a3e9a40b2"
+    },
+    {
+      "path": "identity.py",
+      "source": "02-服务器版/bot/identity.py",
+      "sha256": "fbb671dcfe18d632dbba16beb579a5414c1dabca89ccab40c4a5274b014beb4c"
+    },
+    {
+      "path": "imgmatch.py",
+      "source": "02-服务器版/bot/imgmatch.py",
+      "sha256": "4986ec3d0aff496df00cbc1a4cad35b8e9036cc66f3a68c9f0b202d158162dd0"
+    },
+    {
+      "path": "inbound_batch.py",
+      "source": "02-服务器版/bot/inbound_batch.py",
+      "sha256": "af7c830cf283e987abda5f24ce03acc2a849cf63245642a99f878efd8f813687"
+    },
+    {
+      "path": "inner_life.py",
+      "source": "02-服务器版/bot/inner_life.py",
+      "sha256": "e6996c963b8b99fe48a92f711587d505f85d5e6145490d92b1d7f27415da9d4d"
+    },
+    {
+      "path": "interaction_state.py",
+      "source": "02-服务器版/bot/interaction_state.py",
+      "sha256": "47b221c472192fa37ecf4e9582a15a61a5c8656b1720e0ca987266749fae537c"
+    },
+    {
+      "path": "kb.html",
+      "source": "02-服务器版/bot/kb.html",
+      "sha256": "c0af94eceb5418f1667bbd0e2ed0adc14a85216340a8722261b671a7d015094e"
+    },
+    {
+      "path": "kb_cards.py",
+      "source": "02-服务器版/bot/kb_cards.py",
+      "sha256": "d9df5b7d560a8f62bb6353ffb3d63f7736b91f14e366950db2e61cbfba1e38e2"
+    },
+    {
+      "path": "link_reader.py",
+      "source": "02-服务器版/bot/link_reader.py",
+      "sha256": "042b34203d9f9873459cdad79a0c9a10ef0aaca30bacbcd23a3f6e86a10de610"
+    },
+    {
+      "path": "localllm.py",
+      "source": "02-服务器版/bot/localllm.py",
+      "sha256": "6afb756081ccb214d1b9b2dbcc6ce2b41a6aa471deeed2c8782fedad305db6da"
+    },
+    {
+      "path": "main.py",
+      "source": "02-服务器版/bot/main.py",
+      "sha256": "01911cdfec8570a55a929793f0d6c1f37fe2fb312a7bef127c55ec51ef61ec76"
+    },
+    {
+      "path": "media_cache.py",
+      "source": "02-服务器版/bot/media_cache.py",
+      "sha256": "2d1bf63cc06a979b54213d90c5180ae60eb3f442750e8ec163e066f890031d91"
+    },
+    {
+      "path": "memory_lifecycle.py",
+      "source": "02-服务器版/bot/memory_lifecycle.py",
+      "sha256": "cc162ff61cf3cf70315e3fc81c2b8dae184c141c1ea65b5a66be9dad9c98360c"
+    },
+    {
+      "path": "memory_use.py",
+      "source": "02-服务器版/bot/memory_use.py",
+      "sha256": "d31bfc0eb54912b4847256bbc1f10dde0a4df43526402a84be683c12826719e6"
+    },
+    {
+      "path": "metrics.py",
+      "source": "02-服务器版/bot/metrics.py",
+      "sha256": "13ebf101472243b76ce9f82a3bc28938b5df6eecdb4fc53207851f4ac731e97b"
+    },
+    {
+      "path": "model.py",
+      "source": "02-服务器版/bot/model.py",
+      "sha256": "c4850b401d859560e9f2c93311172d5f12559ef9f126bbfd25c4ae3ddd869cd1"
+    },
+    {
+      "path": "music.py",
+      "source": "02-服务器版/bot/music.py",
+      "sha256": "edd9d293beb08ce79948f152018392be9c0b806e9780f9053684a5b4a2b73e38"
+    },
+    {
+      "path": "onebot.py",
+      "source": "02-服务器版/bot/onebot.py",
+      "sha256": "a266d6847773bb91914c50738cec667bf223e9f204e13bae6b1f9649e14725c7"
+    },
+    {
+      "path": "ops.html",
+      "source": "02-服务器版/bot/ops.html",
+      "sha256": "7eacd4d02351a28356dfbff166eac604f2e0b32657faa536e6276db0133d595f"
+    },
+    {
+      "path": "persona.py",
+      "source": "02-服务器版/bot/persona.py",
+      "sha256": "fc29b029960675e658be93955c75a561593505c33b8347330d2d7bbe7c8d2d29"
+    },
+    {
+      "path": "private_contact.py",
+      "source": "02-服务器版/bot/private_contact.py",
+      "sha256": "4d9dc41c90120b0b86f05720f4f11963d93f58d06c5036304a6ce3729014681c"
+    },
+    {
+      "path": "proactive_hooks.py",
+      "source": "02-服务器版/bot/proactive_hooks.py",
+      "sha256": "d80caf84d98dccd027542d6f28e9f5780801b03a27134f85c5f486f0cefe8c4c"
+    },
+    {
+      "path": "qq_faces.py",
+      "source": "02-服务器版/bot/qq_faces.py",
+      "sha256": "092251f5fa6a41496973120dcee2fc3d28fddc5ae05c187c58bbcd52dc97d37e"
+    },
+    {
+      "path": "qzone_email.py",
+      "source": "02-服务器版/bot/qzone_email.py",
+      "sha256": "7917bf0ae7b2444a66e75b2407b81eb4dfad8f417af5ed00a69825bf359a726f"
+    },
+    {
+      "path": "qzone_web.py",
+      "source": "02-服务器版/bot/qzone_web.py",
+      "sha256": "2727c63eb575aaf3861d75f6e3ba0484bba5d1c6c530a0e58f18423e49a47ed9"
+    },
+    {
+      "path": "recent_topic.py",
+      "source": "02-服务器版/bot/recent_topic.py",
+      "sha256": "474d5a233b250923e8abc4cd5b54a17697ee524385d0521071593fbd3c5ff3e8"
+    },
+    {
+      "path": "refuse.py",
+      "source": "02-服务器版/bot/refuse.py",
+      "sha256": "2920d8e1553c98f354befc928ecca5707fa8614cd2e408cb003880f28392a0eb"
+    },
+    {
+      "path": "reply_autonomy.py",
+      "source": "02-服务器版/bot/reply_autonomy.py",
+      "sha256": "a42796194b12d455395b398e4fc7cd612d2f60f52c2cd53ce75a2dc6a3430735"
+    },
+    {
+      "path": "reply_expression.py",
+      "source": "02-服务器版/bot/reply_expression.py",
+      "sha256": "75d28a7fa9b56300145231e34d727eb07b26a76474157dd51c258a22bb654b74"
+    },
+    {
+      "path": "safety.py",
+      "source": "02-服务器版/bot/safety.py",
+      "sha256": "750f82af3f6b089da0ff3c9ac1e580e19e0b1f1545cac4bd83e2237524c7db96"
+    },
+    {
+      "path": "search_turn.py",
+      "source": "02-服务器版/bot/search_turn.py",
+      "sha256": "ae78ddf86518d3af167240f6c12e9dc741bfd0b12a793585a7dcfa2aa4a81607"
+    },
+    {
+      "path": "self_continuity.py",
+      "source": "02-服务器版/bot/self_continuity.py",
+      "sha256": "ed8be7a5742737a83dac619a552f0040d33cacd1349bf89365947b4ba65387e3"
+    },
+    {
+      "path": "self_growth.py",
+      "source": "02-服务器版/bot/self_growth.py",
+      "sha256": "7576d0241de686035c9c5fc079c2f053552baa5eb1e2a59b84e356abee6be302"
+    },
+    {
+      "path": "self_runtime.py",
+      "source": "02-服务器版/bot/self_runtime.py",
+      "sha256": "d975cebbcb374d3c1f44b5e1b91e865f880113610110bd01b6ef4305d3d92b9c"
+    },
+    {
+      "path": "sleep_memory.py",
+      "source": "02-服务器版/bot/sleep_memory.py",
+      "sha256": "9e06fe414278109b0219f5aacd9ee0a5f49b053462022cc613e4d81b51d5c956"
+    },
+    {
+      "path": "stickers.py",
+      "source": "02-服务器版/bot/stickers.py",
+      "sha256": "a6bed063f1184dbf43a2f34e9e51ea735f82c27937fec4836bbfe13fbce9ef3d"
+    },
+    {
+      "path": "sticker_cards.py",
+      "source": "02-服务器版/bot/sticker_cards.py",
+      "sha256": "fc1bed5a23b0687c82e4ab8a8fc2e9cc1596b257c507db4ee2bada5b025581a1"
+    },
+    {
+      "path": "sticker_diversity.py",
+      "source": "02-服务器版/bot/sticker_diversity.py",
+      "sha256": "aeb8f16735aaf7c587ae20a6555373c81d420cc79ff7dff82f0ff130735569c4"
+    },
+    {
+      "path": "sticker_duplicates.py",
+      "source": "02-服务器版/bot/sticker_duplicates.py",
+      "sha256": "6698ad7544559ad9ecbc6eb4b23304bfa4ef94eb6e5fca3065db856fc654243e"
+    },
+    {
+      "path": "sticker_engine.py",
+      "source": "02-服务器版/bot/sticker_engine.py",
+      "sha256": "22f44b9a047c77472548bf9849354429c7bd84c3be9954c06aac97ebd6cf9748"
+    },
+    {
+      "path": "sticker_index.py",
+      "source": "02-服务器版/bot/sticker_index.py",
+      "sha256": "5fe8325a352736763ccea16373707a1cd583f9db779c3d8b198531ca5e801ad2"
+    },
+    {
+      "path": "store.py",
+      "source": "02-服务器版/bot/store.py",
+      "sha256": "f7454a220c895307efd4faf4ee1ac9b000a912133252d275b47ec27c5416e6e8"
+    },
+    {
+      "path": "style.py",
+      "source": "02-服务器版/bot/style.py",
+      "sha256": "570d47acdc434f40f73994ccb14193d6883086fcbe1f9e98262d54ffa029dec1"
+    },
+    {
+      "path": "thread_view.py",
+      "source": "02-服务器版/bot/thread_view.py",
+      "sha256": "f7bf3113eec97180c02facab81484252e7869e1394991f1ab14c471c3ccebac2"
+    },
+    {
+      "path": "tools_gate.py",
+      "source": "02-服务器版/bot/tools_gate.py",
+      "sha256": "120c36d1161909017fd5fa53567a1a2826610dc6b01e9a89d202f06ed2fb86fd"
+    },
+    {
+      "path": "usage_board.py",
+      "source": "02-服务器版/bot/usage_board.py",
+      "sha256": "4eca22513744e4f9f5eb47eca92731f32ad728ecdc5f27442750cf7aec297d38"
+    },
+    {
+      "path": "util.py",
+      "source": "02-服务器版/bot/util.py",
+      "sha256": "63a165e8457e29e1cbab5611f005a20630b152ec897808eab883111dd9891eec"
+    },
+    {
+      "path": "video.html",
+      "source": "02-服务器版/bot/video.html",
+      "sha256": "83f0cc14fdc3ec2632d7745fb70fa1d0386e0f09f5d5283e3d76d3385c4e41a7"
+    },
+    {
+      "path": "video_browse.py",
+      "source": "02-服务器版/bot/video_browse.py",
+      "sha256": "65cdbb9ccd63fb70e30ae0d2dfd7d506f42c4fa46b7355b4f4d18e893c0abb4e"
+    },
+    {
+      "path": "video_reader.py",
+      "source": "02-服务器版/bot/video_reader.py",
+      "sha256": "b04671dee2ad49680214692ee836e4bbf017ab211b45ff8605ef746113e67fe3"
+    },
+    {
+      "path": "voice.py",
+      "source": "02-服务器版/bot/voice.py",
+      "sha256": "bf48f33572432fac0ebd2af48db18db678030321097c2c0fb071e8bce6ed983e"
+    },
+    {
+      "path": "voice_ledger.py",
+      "source": "02-服务器版/bot/voice_ledger.py",
+      "sha256": "f97b18b7127774af21574bc3a7bf7d0094cb1909783b1b574938c773b0d2a844"
+    },
+    {
+      "path": "weather.py",
+      "source": "02-服务器版/bot/weather.py",
+      "sha256": "af48d79abda94769ef8c1a7ffa9b3326d289f898aa938000a18607fc7283efaa"
+    },
+    {
+      "path": "websearch.py",
+      "source": "02-服务器版/bot/websearch.py",
+      "sha256": "6f00fac0e606202f1e9adf0a17bab48215b55941e2b89ee333a9de6bdffcb393"
+    },
+    {
+      "path": "runtime/console_base.py",
+      "source": "02-服务器版/console.py",
+      "sha256": "01160e6047d9b17b70fca8df6a965d22edf210a78c9cd91a5b6fa15570b10ee3"
+    },
+    {
+      "path": "runtime/core/ops_base.py",
+      "source": "02-服务器版/bot/ops_api.py",
+      "sha256": "57195dd8055f42d1364f309e22ca40f46c9c536cd61b39e97577f29c333fa966"
+    },
+    {
+      "path": "scene_continuity.py",
+      "source": "02-服务器版/bot/scene_continuity.py",
+      "sha256": "158049f275e919cb938ba94e3e22d95d024d9af26274f6bcb402186c6fb24c1d"
+    }
+  ]
+}

@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>运维中心 · 大肥鱼</title>
+<script>
+(function(){
+  const theme = new URLSearchParams(location.hash.slice(1)).get('theme') || new URLSearchParams(location.search).get('theme') || (localStorage.getItem('hybrid-theme') || 'light');
+  document.documentElement.classList.toggle('light', theme === 'light');
+  if (theme === 'light' || theme === 'dark') { try { localStorage.setItem('hybrid-theme', theme); } catch (_) {} }
+})();
+</script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1520;color:#e7eefc;font:14px/1.6 system-ui,"Microsoft YaHei",sans-serif}
+a{color:#7fb6ff;text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.top h1{font-size:19px;margin:0}
+.top .sp{flex:1}
+.btn{background:#24405f;color:#e7eefc;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px}
+.btn:hover{background:#2d5079}
+.btn.pri{background:#2f6fd0}
+.btn.pri:hover{background:#3b82f6}
+.btn.ghost{background:transparent;border:1px solid #2b3d55}
+.btn.sm{padding:5px 10px;font-size:13px}
+.tabs{display:flex;gap:8px;margin:6px 0 16px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:999px;background:#16202e;border:1px solid #22303f;cursor:pointer}
+.tab.on{background:#2f6fd0;border-color:#2f6fd0}
+.hint{color:#8ba0bb;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.card{background:#16202e;border:1px solid #22303f;border-radius:12px;padding:14px}
+.card h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.ok{background:#3ddc84}.warn{background:#ffc857}.bad{background:#ff6b6b}.idle{background:#5b6b80}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{background:#1d2a3a;border:1px solid #2b3d55;border-radius:999px;padding:2px 9px;font-size:12px;color:#b9c9dd}
+.chip.good{border-color:#2f6b4a;color:#8fe6b4}
+.chip.bad{border-color:#6b2f2f;color:#ffb3b3}
+.probs{margin:6px 0 0;padding-left:18px;color:#ffb3b3}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.kv{color:#8ba0bb;font-size:13px}
+.big{font-size:22px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #22303f;vertical-align:top}
+th{color:#8ba0bb;font-weight:600}
+pre{background:#0b1220;border:1px solid #22303f;border-radius:8px;padding:10px;overflow:auto;max-height:320px;font-size:12px;white-space:pre-wrap;word-break:break-all}
+.persona{display:grid;grid-template-columns:260px 1fr;gap:14px}
+.botlist{display:flex;flex-direction:column;gap:8px}
+.botitem{background:#16202e;border:1px solid #22303f;border-radius:10px;padding:10px 12px;cursor:pointer}
+.botitem.on{border-color:#2f6fd0;background:#1a2a40}
+.botitem .n{font-weight:600}
+textarea{width:100%;min-height:420px;background:#0b1220;color:#e7eefc;border:1px solid #22303f;border-radius:10px;padding:12px;font:13px/1.7 ui-monospace,Consolas,monospace;resize:vertical}
+select{background:#0b1220;color:#e7eefc;border:1px solid #22303f;border-radius:8px;padding:6px 8px}
+input[type=text]{background:#0b1220;color:#e7eefc;border:1px solid #22303f;border-radius:8px;padding:8px 10px;width:100%}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#24405f;color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1}
+.muted{color:#5b6b80}
+@media(max-width:820px){.persona{grid-template-columns:1fr}textarea{min-height:300px}}
+
+html.light{color-scheme:light}
+html.light body{background:#f2f4fb;color:#243047}
+html.light a{color:#306fbe}
+html.light .card,html.light .botitem,html.light .tab{background:#fff;border-color:#d9e1ee}
+html.light .tab.on,html.light .btn.pri{background:#397bd0;border-color:#397bd0;color:#fff}
+html.light .btn{background:#e5eaf5;color:#243047}
+html.light .btn:hover{background:#d5dfef}
+html.light .btn.pri:hover{background:#306fbe}
+html.light .btn.ghost{background:transparent;border-color:#c8d2e3}
+html.light .hint,html.light .kv,html.light th{color:#586b87}
+html.light .muted{color:#667994}
+html.light .chip{background:#eef2f9;border-color:#c8d2e3;color:#405675}
+html.light .chip.good{border-color:#8acaa6;color:#187b4b}
+html.light .chip.bad{border-color:#e4aaaa;color:#ad3737}
+html.light .probs{color:#ad3737}
+html.light th,html.light td{border-color:#d9e1ee}
+html.light pre,html.light textarea,html.light select,html.light input[type=text]{background:#f2f4fb;color:#243047;border-color:#d9e1ee}
+html.light .botitem.on{background:#e3edfa;border-color:#397bd0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>运维中心</h1>
+    <span class="hint" id="nowline"></span>
+    <span class="sp"></span>
+    <a class="btn ghost" href="/">← 返回面板</a>
+    <button class="btn ghost" onclick="load()">刷新</button>
+  </div>
+  <div class="tabs">
+    <div class="tab on" data-t="health" onclick="switchTab('health')">体检 · 状态</div>
+    <div class="tab" data-t="alerts" onclick="switchTab('alerts')">告警记录</div>
+    <div class="tab" data-t="bots" onclick="switchTab('bots')">机器人 · 自我资料</div>
+  </div>
+
+  <section id="tab-health">
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn pri" id="btnCheck" onclick="selftest()">立即体检</button>
+      <span class="hint">只检查，不发任何 QQ 消息，也不会打扰你；有问题才会发邮件。</span>
+    </div>
+    <div id="mailrow" class="hint" style="margin-bottom:12px"></div>
+    <div id="checksummary" class="hint" style="margin-bottom:10px"></div>
+    <div class="grid" id="cards"></div>
+    <div class="card" style="margin-top:12px">
+      <h3>最近 24 小时</h3>
+      <div id="daily" class="hint">加载中…</div>
+    </div>
+  </section>
+
+  <section id="tab-alerts" hidden>
+    <div class="hint" style="margin-bottom:10px">只在出问题时记一条；没问题这里就是空的。每条的「复制给 AI」会把机器人、问题、证据、建议一次拷走。</div>
+    <div id="alerts"></div>
+  </section>
+
+  <section id="tab-bots" hidden>
+    <div class="persona">
+      <div>
+        <div class="botlist" id="botlist"></div>
+        <a class="btn ghost sm" style="margin-top:10px;width:100%;display:block;text-align:center" href="http://127.0.0.1:18991/#bots" target="_blank" rel="noopener">去总控台加机器人 ↗</a>
+      </div>
+      <div class="card">
+        <div id="personaHead" class="hint">左边选择机器人，查看当前实际使用的资料。</div>
+        <div id="personaNotice" class="hint" style="margin-top:10px;white-space:pre-line"></div>
+        <div class="row" id="personaBar" style="display:none;margin:10px 0">
+          <select id="fileSel" onchange="loadPersona()"></select>
+          <span class="hint" id="fileHint"></span>
+          <span class="sp" style="flex:1"></span>
+          <button id="personaSave" class="btn pri sm" onclick="savePersona()" disabled>保存当前资料</button>
+        </div>
+        <textarea id="personaText" style="display:none" spellcheck="false"></textarea>
+        <div class="row" id="personaFoot" style="display:none;margin-top:10px">
+          <span class="hint" id="sizeLine"></span>
+          <span style="flex:1"></span>
+          <select id="histSel" style="max-width:320px"></select>
+          <button id="personaRestore" class="btn ghost sm" onclick="restorePersona()" disabled>回滚当前资料</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var S=null, curBot='', curFile='', curFiles=[], personaEpoch=0, personaReady=false;
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(window._tt);window._tt=setTimeout(function(){e.classList.remove('on')},2600)}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.t===t)});
+  ['health','alerts','bots'].forEach(function(k){$('#tab-'+k).hidden=(k!==t)});
+}
+async function api(url,opt){
+  var r=await fetch(url,opt||{cache:'no-store'});
+  var j=null; try{j=await r.json()}catch(e){}
+  if(!r.ok||!j||j.ok===false) throw new Error((j&&j.error)||('HTTP '+r.status));
+  return j;
+}
+async function load(){
+  try{
+    S=await api('/api/ops/state');
+    $('#nowline').textContent='最近一次体检：'+(S.health_time||'还没体检过');
+    renderCards(); renderMail(); renderDaily(); renderAlerts(); renderBots();
+  }catch(e){ toast('读取失败：'+e.message) }
+}
+function statusOf(b){
+  var h=b.health||{};
+  if(h.ok===false) return ['bad','不正常'];
+  if(h.ok===true) return ['ok','正常'];
+  return ['idle','未检测'];
+}
+function renderCards(){
+  var box=$('#cards'); box.innerHTML='';
+  var bad=(S.bots||[]).filter(function(b){return (b.health||{}).ok===false}).length;
+  $('#checksummary').innerHTML = bad? ('<span style="color:#ff9b9b">有 '+bad+' 只不正常，下面标红的先看。</span>')
+    : '<span style="color:#8fe6b4">目前都正常。</span>（体检只是检查，不会发消息）';
+  (S.bots||[]).forEach(function(b){
+    var h=b.health||{}, st=statusOf(b), checks=h.checks||{};
+    var chips=Object.keys(checks).map(function(k){
+      var label=(S.checks_label||{})[k]||k;
+      var v=checks[k];
+      if(k==='onebot' && (v==='n/a'||v==='unknown')){
+        return '<span class="chip">－ '+(v==='n/a'?'官方通道，没有这项检查':'通道状态没取到')+'</span>';
+      }
+      var ok=(v===true)||v==='online'||v==='good';
+      return '<span class="chip '+(ok?'good':'bad')+'">'+(ok?'✓ ':'✗ ')+esc(label)+'</span>';
+    }).join('');
+    var probs=(h.problems||[]).map(function(p){return '<li>'+esc(p)+'</li>'}).join('');
+    var age=h.last_msg_age_s? ('最近一条消息：'+fmtAge(h.last_msg_age_s)+'前') : '';
+    box.insertAdjacentHTML('beforeend',
+      '<div class="card"><h3><span class="dot '+st[0]+'"></span>'+esc(b.name)+' <span class="hint">'+st[1]+'</span></h3>'+
+      '<div class="hint">'+esc(b.channel_label||b.channel||'')+(b.account?(' · '+esc(b.account)):'')+(b.panel?(' · <a href="'+esc(b.panel)+'" target="_blank">面板</a>'):'')+'</div>'+
+      '<div class="chips">'+chips+'</div>'+
+      (probs?('<ul class="probs">'+probs+'</ul>'):'')+
+      (age?('<div class="kv">'+esc(age)+'</div>'):'')+
+      '</div>');
+  });
+}
+function fmtAge(s){
+  if(s<120) return Math.round(s)+' 秒';
+  if(s<7200) return Math.round(s/60)+' 分钟';
+  return Math.round(s/3600)+' 小时';
+}
+function renderMail(){
+  var m=(S&&S.mail)||{};
+  var box=$('#mailrow');
+  if(!box) return;
+  box.innerHTML=(m.ready
+      ? '<span style="color:#8fe6b4">邮件通道：✅ 已配置 → '+esc(m.to||'')+'</span> <button class="btn ghost sm" onclick="mailTest()">发测试邮件</button>'
+      : '<span style="color:#ffc857">邮件通道：⚠️ '+esc(m.hint||'没配好')+'</span> <a class="btn ghost sm" href="/" target="_blank">去设置页填</a>');
+}
+async function mailTest(){
+  if(!confirm('发一封测试邮件到你的邮箱？（只有这一封，不是故障）')) return;
+  toast('发送中…');
+  try{
+    var d=await api('/api/ops/mail_test',{method:'POST',body:new URLSearchParams({})});
+    toast(d.note||'已发送');
+  }catch(e){ toast('发送失败：'+e.message) }
+}
+function renderDaily(){
+  var d=S.daily||{}, rs=S.restarts_24h||0;
+  var parts=(d.bots||[]).map(function(b){
+    return '<div style="margin-top:6px">'+esc(b.name)+'：收到 '+b.in+' 条 · 发出 '+b.out+' 条 · 异常日志 '+(b.errors||0)+' 条'+
+      (b.last_ts?(' · 最后活动 '+fmtAge(Math.round(Date.now()/1000-b.last_ts))+'前'):'')+'</div>';
+  }).join('');
+  $('#daily').innerHTML='<div>合计：收到 <b>'+(d.messages_in||0)+'</b> 条，发出 <b>'+(d.messages_out||0)+'</b> 条；看门狗重启 <b>'+rs+'</b> 次；告警 <b>'+((S.alerts||[]).length)+'</b> 条在册。</div>'+parts;
+}
+function renderAlerts(){
+  var box=$('#alerts'), list=S.alerts||[];
+  if(!list.length){ box.innerHTML='<div class="card hint">还没有告警。没问题就不打扰你，这是正常的。</div>'; return; }
+  var h='<div class="card"><table><thead><tr><th>时间</th><th>机器人</th><th>问题</th><th>通知</th><th></th></tr></thead><tbody>';
+  list.forEach(function(a,i){
+    var t=new Date((a.ts||0)*1000);
+    h+='<tr><td>'+t.toLocaleString('zh-CN',{hour12:false})+'</td><td>'+esc(a.bot||a.bot_id||'')+'</td><td>'+esc(a.problem||'')+
+       '<div><button class="btn ghost sm" onclick="showDetail('+i+')">看证据</button> '+
+       '<button class="btn ghost sm" onclick="copyAlert('+i+')">复制给 AI</button></div>'+
+       '<pre id="ad'+i+'" style="display:none"></pre></td><td>'+esc(a.channel==='email'?'邮件':(a.channel==='qq'?'QQ':'无'))+'</td><td>'+(a.notified?'✓':'—')+'</td></tr>';
+  });
+  box.innerHTML=h+'</tbody></table></div>';
+}
+function alertText(a){
+  return '【机器人告警】'+(a.bot||'')+'\n'+
+    '时间：'+new Date((a.ts||0)*1000).toLocaleString('zh-CN',{hour12:false})+'\n'+
+    '问题：'+(a.problem||'')+'\n'+
+    '细节：'+(a.detail||'')+'\n'+
+    '已自动处理：'+((a.actions||[]).join('；')||'无')+'\n'+
+    '证据：\n'+((a.evidence||[]).join('\n'));
+}
+function showDetail(i){
+  var a=S.alerts[i], el=document.getElementById('ad'+i);
+  el.textContent=alertText(a);
+  el.style.display = el.style.display==='none'?'block':'none';
+}
+function copyAlert(i){
+  var t=alertText(S.alerts[i]);
+  (navigator.clipboard? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){toast('已复制，可以直接粘给 AI')},function(){
+    var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('已复制')}catch(e){toast('复制失败，手动选中吧')}
+    ta.remove();
+  });
+}
+function renderBots(){
+  var box=$('#botlist'); box.innerHTML='';
+  (S.bots||[]).forEach(function(b){
+    var st=statusOf(b);
+    box.insertAdjacentHTML('beforeend','<div class="botitem'+(curBot===b.id?' on':'')+'" onclick="pickBot(\''+b.id+'\')">'+
+      '<div class="n"><span class="dot '+st[0]+'"></span> '+esc(b.name)+'</div>'+
+      '<div class="hint">'+esc(b.channel_label||'')+(b.account?(' · '+esc(b.account)):'')+'</div></div>');
+  });
+  if(!curBot && (S.bots||[]).length) pickBot(S.bots[0].id);
+}
+function personaBusy(busy){
+  personaReady=!busy;
+  $('#personaSave').disabled=busy; $('#personaRestore').disabled=busy;
+  $('#personaText').disabled=busy;
+}
+function personaHistory(items){
+  var hist=$('#histSel'); hist.innerHTML='<option value="">（选择当前文件的备份）</option>';
+  (items||[]).filter(function(x){return x.name===curFile}).forEach(function(x){
+    hist.insertAdjacentHTML('beforeend','<option value="'+esc(x.file)+'">'+esc(x.time_text)+' · '+esc(x.file)+'</option>');
+  });
+}
+async function pickBot(id){
+  var previousFile=curFile, previousBot=curBot, epoch=++personaEpoch;
+  curBot=id; curFile=''; curFiles=[]; renderBots(); personaBusy(true);
+  $('#personaText').value=''; $('#fileHint').textContent=''; $('#sizeLine').textContent='';
+  $('#personaNotice').textContent='读取当前资料…'; personaHistory([]);
+  try{
+    var d=await api('/api/ops/persona?bot='+encodeURIComponent(id));
+    if(epoch!==personaEpoch||curBot!==id) return;
+    $('#personaHead').innerHTML='<b>'+esc(d.bot.name)+'</b> <span class="hint">'+esc(d.bot.channel_label||'')+' · 目录 '+esc(d.bot.persona_dir||'')+'</span>';
+    $('#personaNotice').textContent=(d.notice||'')+(d.growth_panel?'\n成长情况：'+d.growth_panel:'');
+    $('#personaBar').style.display='flex'; $('#personaText').style.display='block'; $('#personaFoot').style.display='flex';
+    var sel=$('#fileSel'); sel.innerHTML=''; curFiles=d.files||[];
+    curFiles.forEach(function(f){
+      sel.insertAdjacentHTML('beforeend','<option value="'+esc(f.name)+'">'+esc(f.label)+(f.exists?'':'（空）')+'</option>');
+    });
+    curFile=previousBot===id&&curFiles.some(function(f){return f.name===previousFile})?previousFile:(d.current_file||(curFiles[0]||{}).name||'');
+    sel.value=curFile; sel.disabled=curFiles.length<=1;
+    if(!curFile){ $('#personaNotice').textContent='没有可编辑的当前资料'; return; }
+    await loadPersona();
+  }catch(e){ if(epoch===personaEpoch) toast('资料读取失败：'+e.message) }
+}
+async function loadPersona(){
+  curFile=$('#fileSel').value;
+  var bot=curBot, name=curFile, epoch=++personaEpoch;
+  personaBusy(true); $('#personaText').value=''; personaHistory([]);
+  try{
+    var d=await api('/api/ops/persona_get?bot='+encodeURIComponent(bot)+'&name='+encodeURIComponent(name));
+    if(epoch!==personaEpoch||bot!==curBot||name!==curFile) return;
+    $('#personaText').value=d.content||'';
+    var hint=curFiles.filter(function(x){return x.name===name})[0];
+    $('#fileHint').textContent=hint?hint.hint:'';
+    $('#sizeLine').textContent=(d.content||'').length+' 字（保存后下一条消息重新读取；当前文件自动保留 5 份备份）';
+    personaHistory(d.history||[]); personaBusy(false);
+  }catch(e){ if(epoch===personaEpoch) toast('读不出来：'+e.message) }
+}
+async function savePersona(){
+  if(!personaReady||!curBot||!curFile) return;
+  var bot=curBot, name=curFile, epoch=personaEpoch;
+  var body=new URLSearchParams({bot:bot,name:name,content:$('#personaText').value});
+  personaBusy(true);
+  try{
+    var d=await api('/api/ops/persona_save',{method:'POST',body:body});
+    if(epoch!==personaEpoch||bot!==curBot||name!==curFile) return;
+    toast(d.note||'已保存'); await loadPersona();
+  }catch(e){ if(epoch===personaEpoch){ toast('保存失败：'+e.message); personaBusy(false); } }
+}
+async function restorePersona(){
+  if(!personaReady||!curBot||!curFile) return;
+  var f=$('#histSel').value, bot=curBot, name=curFile, epoch=personaEpoch;
+  if(!f){ toast('先选择当前文件的一版备份'); return }
+  if(!confirm('确定回滚当前资料？当前文件会先备份，记忆和成长记录不会清空。')) return;
+  personaBusy(true);
+  try{
+    var d=await api('/api/ops/persona_restore',{method:'POST',body:new URLSearchParams({bot:bot,name:name,file:f})});
+    if(epoch!==personaEpoch||bot!==curBot||name!==curFile) return;
+    toast(d.note||'已回滚'); await loadPersona();
+  }catch(e){ if(epoch===personaEpoch){ toast('回滚失败：'+e.message); personaBusy(false); } }
+}
+async function selftest(){
+  var b=$('#btnCheck'); b.disabled=true; b.textContent='体检中…';
+  try{
+    var d=await api('/api/ops/selftest',{method:'POST',body:new URLSearchParams({})});
+    if(d.note) toast(d.note);
+    var r=d.result||{};
+    var bad=(r.bots||[]).filter(function(x){return !x.ok}).length;
+    toast(bad? ('体检完成：'+bad+' 只不正常，看下面标红的') : '体检完成：都正常');
+    await load();
+  }catch(e){ toast('体检失败：'+e.message) }
+  b.disabled=false; b.textContent='立即体检';
+}
+load();
+setInterval(function(){ if(!document.hidden) load(); }, 60000);
+</script>
+</body>
+</html>

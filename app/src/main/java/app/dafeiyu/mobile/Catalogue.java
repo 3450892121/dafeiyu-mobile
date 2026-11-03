@@ -12,12 +12,13 @@ import java.util.List;
 
 final class Catalogue {
     static final class Feature {
-        final String name, status, module;
+        final String name, status, module, detail;
         final boolean optional;
         Feature(JSONObject data, JSONObject labels) throws Exception {
             name = data.getString("name");
             module = data.getString("module");
             status = labels.getString(data.getString("status"));
+            detail = data.optString("omissionReason", "");
             optional = data.getString("requirement").equals("optional_if_infeasible");
         }
     }

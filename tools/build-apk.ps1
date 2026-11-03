@@ -49,8 +49,13 @@ $testClasses = Join-Path $runRoot 'test-classes'
 New-Item -ItemType Directory -Path $testClasses -Force | Out-Null
 Invoke-Checked $javac @('-encoding','UTF-8','--release','8','-d',$testClasses,
     (Join-Path $projectRoot 'app\src\main\java\app\dafeiyu\mobile\Readiness.java'),
-    (Join-Path $projectRoot 'tests\ReadinessTest.java'))
+    (Join-Path $projectRoot 'app\src\main\java\app\dafeiyu\mobile\SafeTar.java'),
+    (Join-Path $projectRoot 'tests\ReadinessTest.java'),
+    (Join-Path $projectRoot 'tests\SafeTarTest.java'),
+    (Join-Path $projectRoot 'tools\NormalizeZip.java'),
+    (Join-Path $projectRoot 'tools\VerifyApk.java'))
 Invoke-Checked $java @('-cp',$testClasses,'app.dafeiyu.mobile.ReadinessTest')
+Invoke-Checked $java @('-cp',$testClasses,'app.dafeiyu.mobile.SafeTarTest',$runRoot)
 if ($TestOnly) { return }
 
 if (-not $SdkHome) { $SdkHome = Join-Path $projectRoot '.tools\android-sdk' }
@@ -70,6 +75,7 @@ try {
     Invoke-Checked 'node' @('tools\check-project.mjs')
     Invoke-Checked 'node' @('tools\prepare-assets.mjs')
     $version = ConvertFrom-StringData (Get-Content -LiteralPath 'version.properties' -Raw)
+    $runtimeLayout = Get-Content -LiteralPath 'runtime\layout.json' -Raw | ConvertFrom-Json
     $generatedJava = Join-Path $runRoot 'generated-java'
     $classes = Join-Path $runRoot 'classes'
     $dex = Join-Path $runRoot 'dex'
@@ -84,9 +90,12 @@ try {
     $resourcesApk = Join-Path $runRoot 'resources.ap_'
     Invoke-Checked $aapt2 @('compile','--dir',(Join-Path $projectRoot 'app\src\main\res'),'-o',$compiled)
     Invoke-Checked $aapt2 @('link','-o',$resourcesApk,'-I',$androidJar,'--manifest',$manifestFile,
-        '--java',$generatedJava,'--min-sdk-version','26','--target-sdk-version','35',
+        '--java',$generatedJava,'--min-sdk-version',([string]$runtimeLayout.minSdk),'--target-sdk-version',([string]$runtimeLayout.targetSdk),
         '--version-code',$version.versionCode,'--version-name',$version.versionName,
         '-A',(Join-Path $projectRoot 'app\build\generated\assets'),$compiled)
+    $normalizedResources = Join-Path $runRoot 'resources-normalized.ap_'
+    Invoke-Checked $java @('-cp',$testClasses,'NormalizeZip',$resourcesApk,$normalizedResources)
+    $resourcesApk = $normalizedResources
 
     $javaSources = @(
         Get-ChildItem -LiteralPath (Join-Path $projectRoot 'app\src\main\java') -Filter '*.java' -Recurse -File
@@ -102,7 +111,15 @@ try {
     $aligned = Join-Path $runRoot 'aligned.apk'
     Copy-Item -LiteralPath $resourcesApk -Destination $unsigned
     Invoke-Checked $jar @('--update','--file',$unsigned,'-C',$dex,'classes.dex')
-    Invoke-Checked $zipalign @('-f','4',$unsigned,$aligned)
+    $nativeRoot = Project-Output 'app\build\generated\jni'
+    foreach($name in @('libproot.so','libproot-loader.so','libtalloc.so','libandroid-shmem.so')) {
+        if(-not(Test-Path -LiteralPath (Join-Path $nativeRoot ('arm64-v8a\'+$name)))){throw "Missing native runtime: $name"}
+    }
+    $packageLib = Join-Path $runRoot 'native\lib\arm64-v8a'
+    New-Item -ItemType Directory -Path $packageLib -Force | Out-Null
+    Get-ChildItem -LiteralPath (Join-Path $nativeRoot 'arm64-v8a') -File | Copy-Item -Destination $packageLib
+    Invoke-Checked $jar @('--update','--no-compress','--file',$unsigned,'-C',(Join-Path $runRoot 'native'),'lib')
+    Invoke-Checked $zipalign @('-P','16','-f','4',$unsigned,$aligned)
 
     # Local development signing only; never reads another project's or production keys.
     $signingRoot = Project-Output '.local\signing'
@@ -115,12 +132,18 @@ try {
     }
     $dist = Project-Output 'dist'
     New-Item -ItemType Directory -Path $dist -Force | Out-Null
-    $apk = Join-Path $dist ('dafeiyu-mobile-' + $version.versionName + '-scaffold.apk')
+    $apk = Join-Path $dist ('dafeiyu-mobile-' + $version.versionName + '-arm64.apk')
     Invoke-Checked $java @('-jar',$apksigner,'sign','--ks',$signingFile,'--ks-key-alias','development',
         '--ks-pass','pass:android','--key-pass','pass:android','--out',$apk,$aligned)
     Invoke-Checked $java @('-jar',$apksigner,'verify','--verbose',$apk)
-    Invoke-Checked $zipalign @('-c','4',$apk)
+    Invoke-Checked $zipalign @('-c','-P','16','4',$apk)
     Invoke-Checked $aapt @('dump','badging',$apk)
+    Invoke-Checked $java @('-cp',$testClasses,'VerifyApk',$apk,(Join-Path $projectRoot 'app\build\generated\assets\runtime\payload-manifest.json'))
+    Invoke-Checked 'node' @('tools\fetch-native-sources.mjs','--check')
+    $sourceStage = & node 'tools\package-native-sources.mjs'
+    if($LASTEXITCODE -ne 0){throw 'Native source packaging failed.'}
+    $sourceArchive = Join-Path $dist ('dafeiyu-mobile-' + $version.versionName + '-native-sources.zip')
+    Invoke-Checked $jar @('--create','--file',$sourceArchive,'-C',([string]$sourceStage),'.')
     Get-FileHash -LiteralPath $apk -Algorithm SHA256 | Format-List
     Write-Output "APK: $apk"
 } finally {

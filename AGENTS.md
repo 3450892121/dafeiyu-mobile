@@ -25,6 +25,7 @@
 - `spec/acceptance.md`：分阶段验收判据及证据要求，不记录执行结果。
 - `spec/qq-access.md`：QQ 实现候选的来源、兼容差异和未验证项。
 - `app/`：原生安卓应用源码与统一主题。
+- `runtime/`：独立手机实例的运行源码、适配策略、固定组件清单与许可，不保存真实资料。
 - `version.properties`：版本信息唯一来源；构建与应用均从此读取。
 - `tools/`：本项目检查、资源生成及构建入口；不得写参考项目。
 - `tests/`：隔离测试，不接入真实 QQ 或真实模型。
@@ -56,6 +57,8 @@
 - `node tools/check-project.mjs`：检查规格、资源、权限及敏感信息。
 - `node --test tests/*.test.mjs`：运行隔离检查。
 - `node tools/prepare-assets.mjs`：从规格生成应用只读展示资源。
+- `powershell -ExecutionPolicy Bypass -File tools/test-runtime.ps1`：运行拦截外部传输的业务与手机适配回归。
+- `node tools/check-runtime.mjs`：核对本机已下载的 ARM64 组件、官方安装包及哈希，不运行 QQ。
 - `powershell -ExecutionPolicy Bypass -File tools/build-apk.ps1`：使用本项目工具链构建并验证 APK；缺依赖时明确失败。
 - 真机安装、QQ 登录及熄屏验收须以设备现场证据为准，不能用源码检查替代。
 

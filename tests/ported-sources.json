@@ -1,0 +1,245 @@
+{
+  "license": "MIT",
+  "files": [
+    {
+      "file": "test_autonomous_expression.py",
+      "source": "02-服务器版/tests/test_autonomous_expression.py",
+      "sha256": "c6c9ecd30942a631d4d7b5c18c1e6a2107fcc7199495d540699a03544774ee1e"
+    },
+    {
+      "file": "test_blacklist.py",
+      "source": "02-服务器版/tests/test_blacklist.py",
+      "sha256": "6902db98f09cea025dce5e21d5ec132ddb6c3cfb8f4cf13059770d91ca51f8ae"
+    },
+    {
+      "file": "test_capabilities.py",
+      "source": "02-服务器版/tests/test_capabilities.py",
+      "sha256": "3cd6ac26d52e467e3958614541814388eb4b4d827eb61096e03660dbb464239c"
+    },
+    {
+      "file": "test_conversation_references.py",
+      "source": "02-服务器版/tests/test_conversation_references.py",
+      "sha256": "6d190d4d0ca30722b292a9d0e01fb7c0f28efabcbe47237b161b16220b7e1a28"
+    },
+    {
+      "file": "test_dreaming.py",
+      "source": "02-服务器版/tests/test_dreaming.py",
+      "sha256": "42401237aaa920ec34028082ac431ee22c83c98bc121b6a556c331b5c1a7e50b"
+    },
+    {
+      "file": "test_dream_private_notice.py",
+      "source": "02-服务器版/tests/test_dream_private_notice.py",
+      "sha256": "f4a6699e469190a423665152a8da7b0d452aebe3d0c7f6929aadd9001b079cf4"
+    },
+    {
+      "file": "test_emotion_regulation.py",
+      "source": "02-服务器版/tests/test_emotion_regulation.py",
+      "sha256": "a78742f8a8c931f2c3f469a55557f4eeb1676e29df582af531d5d5ecc7b9ef33"
+    },
+    {
+      "file": "test_image_note_guard.py",
+      "source": "02-服务器版/tests/test_image_note_guard.py",
+      "sha256": "f312cf9d4ffcfdbb8940edc2b4d02732774897050014add7ed34c9dcd8935665"
+    },
+    {
+      "file": "test_incoming_text_focus.py",
+      "source": "02-服务器版/tests/test_incoming_text_focus.py",
+      "sha256": "26dc4f986f89eec8b35cfa1f23c98c4fd83bd2e17bc392803dc469b5881513f0"
+    },
+    {
+      "file": "test_inner_life.py",
+      "source": "02-服务器版/tests/test_inner_life.py",
+      "sha256": "f3b8c2c1f3267ce14b14737d3e8c76f14487bf36efb2efe09e7ff0e1f37c9156"
+    },
+    {
+      "file": "test_interaction_state.py",
+      "source": "02-服务器版/tests/test_interaction_state.py",
+      "sha256": "a012dd866739db372e8d88815b69bbb8a8e48857f2034a4a2acffdbd4c89578d"
+    },
+    {
+      "file": "test_link_reader_limits.py",
+      "source": "02-服务器版/tests/test_link_reader_limits.py",
+      "sha256": "0bef48ac72066863ef4cb46351c9599717b92e7b463171e6aa4e2cae7ebfa3f0"
+    },
+    {
+      "file": "test_media_download.py",
+      "source": "02-服务器版/tests/test_media_download.py",
+      "sha256": "14b6c3b702fbfd5116aecb65f17c4461d0287d4e104daa3b6167bb3851b3f751"
+    },
+    {
+      "file": "test_memory_continuity.py",
+      "source": "02-服务器版/tests/test_memory_continuity.py",
+      "sha256": "66844ae9778304f970e21559413e7bd033873799efb6ee7a84e2e3f0bf13a5f8"
+    },
+    {
+      "file": "test_memory_lifecycle.py",
+      "source": "02-服务器版/tests/test_memory_lifecycle.py",
+      "sha256": "5496e7851c25b5446aaeb54d9a972321d4654fe5b3a6491dd1da02cb6080022a"
+    },
+    {
+      "file": "test_memory_use.py",
+      "source": "02-服务器版/tests/test_memory_use.py",
+      "sha256": "be6baae4abb57e32526ec7d4bede474f2cf96bfa60a3c94f46aa79936175896e"
+    },
+    {
+      "file": "test_model_response_format.py",
+      "source": "02-服务器版/tests/test_model_response_format.py",
+      "sha256": "3b792200306acabfbc8f9690683ae6e2126c11877cc1cfb3f58bcaeb648ae601"
+    },
+    {
+      "file": "test_neutral_self_labels.py",
+      "source": "02-服务器版/tests/test_neutral_self_labels.py",
+      "sha256": "70edea5fe33058496cbbae469dc2683cf0f652d728fa9329a90335107de01002"
+    },
+    {
+      "file": "test_own_reflections.py",
+      "source": "02-服务器版/tests/test_own_reflections.py",
+      "sha256": "5d637a393616dfd23757f082a89dfa9fcb5e96f2c723abb92a35f9c5858b4468"
+    },
+    {
+      "file": "test_private_access.py",
+      "source": "02-服务器版/tests/test_private_access.py",
+      "sha256": "e7da9b73069adfdb36ec064fcf74c3ae85658cae06d680a9de83c40f75db5660"
+    },
+    {
+      "file": "test_private_contact.py",
+      "source": "02-服务器版/tests/test_private_contact.py",
+      "sha256": "4a76417b3f7aa88c6cd02700d8f318b15bd594456c6080b36169805702273733"
+    },
+    {
+      "file": "test_private_contact_extra_paths.py",
+      "source": "02-服务器版/tests/test_private_contact_extra_paths.py",
+      "sha256": "af42428cd8b0f020df0b18d370818068484edd6487d3fe3547ca90b17584073c"
+    },
+    {
+      "file": "test_proactive_stickers.py",
+      "source": "02-服务器版/tests/test_proactive_stickers.py",
+      "sha256": "444dde3730c5f9e9fbc0fad4c66382aca7d56315bb91369c64994e513abc4dc0"
+    },
+    {
+      "file": "test_qq_face_shorthand.py",
+      "source": "02-服务器版/tests/test_qq_face_shorthand.py",
+      "sha256": "f755cb733ffce2e2c7d44177139156ef5bc91f77d173ed55cc6113f5523a7616"
+    },
+    {
+      "file": "test_qzone_schedule_novelty.py",
+      "source": "02-服务器版/tests/test_qzone_schedule_novelty.py",
+      "sha256": "f11097ae30f6407a55eb79cb1e846bf2f54854008717a5e3ab1ab737735fd373"
+    },
+    {
+      "file": "test_recent_topic.py",
+      "source": "02-服务器版/tests/test_recent_topic.py",
+      "sha256": "e0187a5b38841fa9a9729ba02d0808ec1734f24a32551bcd23fe5ce5a11e9e2e"
+    },
+    {
+      "file": "test_reply_annotation_media.py",
+      "source": "02-服务器版/tests/test_reply_annotation_media.py",
+      "sha256": "c64c1ac06796324043f63fadf5189c7fa0f071de6dec15f255342d051e80a94a"
+    },
+    {
+      "file": "test_reply_attribution_evidence.py",
+      "source": "02-服务器版/tests/test_reply_attribution_evidence.py",
+      "sha256": "90c4962e5a736905f746585765ddc6a3c8af88d7da303b23ae3f4d43813ce4ff"
+    },
+    {
+      "file": "test_reply_autonomy.py",
+      "source": "02-服务器版/tests/test_reply_autonomy.py",
+      "sha256": "aed337b465d4443c5f8dd83f95733db2fa1c62794767fe712dee53d9012fdc19"
+    },
+    {
+      "file": "test_reply_failure_receipts.py",
+      "source": "02-服务器版/tests/test_reply_failure_receipts.py",
+      "sha256": "8f2219f5a6ed202cd4db5fcf4efb1005db862505dff6796578a3df224b28ca62"
+    },
+    {
+      "file": "test_reply_planning_guard.py",
+      "source": "02-服务器版/tests/test_reply_planning_guard.py",
+      "sha256": "b9e23fb17ccaf7eb50e7ff765867340252958134484ab92abe727c4fff4e937b"
+    },
+    {
+      "file": "test_reply_presentation.py",
+      "source": "02-服务器版/tests/test_reply_presentation.py",
+      "sha256": "bc243a0d90f90d97b729860a7519443f6bb084ed8a19963d1f23918dcd1dd54c"
+    },
+    {
+      "file": "test_reply_recipient_note_guard.py",
+      "source": "02-服务器版/tests/test_reply_recipient_note_guard.py",
+      "sha256": "459ed4f7d4db60dafea7a9edc8b3d5c04dabcaf1c3a24b9f7bcbe61584497831"
+    },
+    {
+      "file": "test_scene_continuity.py",
+      "source": "02-服务器版/tests/test_scene_continuity.py",
+      "sha256": "4c1b4e93c1558029b4ce9853d31bb475536f73b3d2aa357e2298079e60f9cdbf"
+    },
+    {
+      "file": "test_search_repair.py",
+      "source": "02-服务器版/tests/test_search_repair.py",
+      "sha256": "24b24110b26b8415c8e7b0a0f51bced5bf12e492130cdced2587392eebc6742d"
+    },
+    {
+      "file": "test_self_continuity.py",
+      "source": "02-服务器版/tests/test_self_continuity.py",
+      "sha256": "645a76b104904836c880d6cd30b011433593b5c0429d458849b381ddbc4b053b"
+    },
+    {
+      "file": "test_self_growth.py",
+      "source": "02-服务器版/tests/test_self_growth.py",
+      "sha256": "dd6896717e0e4bca1509e225792da86c289a2470001e2dbcdbbcbb0316488d96"
+    },
+    {
+      "file": "test_self_growth_persona.py",
+      "source": "02-服务器版/tests/test_self_growth_persona.py",
+      "sha256": "60213795cd14a23a645256da659824bc9b4ae17e48d72e2eedd5da08399dbb84"
+    },
+    {
+      "file": "test_self_growth_proactive.py",
+      "source": "02-服务器版/tests/test_self_growth_proactive.py",
+      "sha256": "e25b1e0ac2cac91410899a304f55c704a5a20f1266a1deec6cb44826904c05d5"
+    },
+    {
+      "file": "test_self_runtime.py",
+      "source": "02-服务器版/tests/test_self_runtime.py",
+      "sha256": "07c56687a056391056ba382800838b4fa7e1b200e39848467350dc644a6eb322"
+    },
+    {
+      "file": "test_send_retry.py",
+      "source": "02-服务器版/tests/test_send_retry.py",
+      "sha256": "3bf3d19b5a7748c351c86b7562bafa3cbe28ec8e2f23e5c330a2099c1a241696"
+    },
+    {
+      "file": "test_sleep_memory.py",
+      "source": "02-服务器版/tests/test_sleep_memory.py",
+      "sha256": "1958fa65f307492e4cb20a8931a0c57b3d9844b3ee230c705ed6deb9a4dcda46"
+    },
+    {
+      "file": "test_sqlite_threading.py",
+      "source": "02-服务器版/tests/test_sqlite_threading.py",
+      "sha256": "42701e0d063ab722403a1748b2b5f243fcb4b6a1bfa1d4f74951ee2d15f19144"
+    },
+    {
+      "file": "test_sticker_delivery_edges.py",
+      "source": "02-服务器版/tests/test_sticker_delivery_edges.py",
+      "sha256": "8c3b8c48d60a3a73b2e11cbfb6835811f939e2bb7f022be1446ca70296ffddb2"
+    },
+    {
+      "file": "test_style_negation.py",
+      "source": "02-服务器版/tests/test_style_negation.py",
+      "sha256": "517cddf9d5b394e81060990b529e5f12b79a443d96efed30f4cf08f876e6aa70"
+    },
+    {
+      "file": "test_turn_understanding.py",
+      "source": "02-服务器版/tests/test_turn_understanding.py",
+      "sha256": "30d2f23707bcf10c6f638dfbd22ce22917c905a1e8d0a3d1905212a7825a8c5b"
+    },
+    {
+      "file": "test_unified_self_qzone.py",
+      "source": "02-服务器版/tests/test_unified_self_qzone.py",
+      "sha256": "89c749946eba3c2efae50fd1957165fc70fb34608bf72004b0907986ec816415"
+    },
+    {
+      "file": "test_video_browse_notifications.py",
+      "source": "02-服务器版/tests/test_video_browse_notifications.py",
+      "sha256": "de0d67675f85a8fa4be6bf4acde1f8b3e89567f128e306df5c1ee2780836413e"
+    }
+  ]
+}

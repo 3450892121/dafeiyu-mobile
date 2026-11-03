@@ -2,18 +2,21 @@ plugins { id 'com.android.application' }
 
 def releaseInfo = new Properties()
 rootProject.file('version.properties').withInputStream { releaseInfo.load(it) }
+def runtimeLayout = new groovy.json.JsonSlurper().parse(rootProject.file('runtime/layout.json'))
 
 android {
     namespace 'app.dafeiyu.mobile'
     compileSdk 35
     defaultConfig {
         applicationId 'app.dafeiyu.mobile'
-        minSdk 26
-        targetSdk 35
+        minSdk runtimeLayout.minSdk
+        targetSdk runtimeLayout.targetSdk
         versionCode releaseInfo.getProperty('versionCode').toInteger()
         versionName releaseInfo.getProperty('versionName')
     }
     sourceSets.main.assets.srcDirs = [layout.buildDirectory.dir('generated/assets').get().asFile]
+    sourceSets.main.jniLibs.srcDirs = [layout.buildDirectory.dir('generated/jni').get().asFile]
+    packagingOptions { jniLibs { useLegacyPackaging true } }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -23,7 +26,8 @@ android {
 def prepareCatalogue = tasks.register('prepareCatalogue', Exec) {
     workingDir rootDir
     commandLine 'node', 'tools/prepare-assets.mjs'
-    inputs.files(rootProject.file('spec/features.json'))
+    inputs.files(rootProject.file('spec/features.json'),rootProject.file('version.properties'),rootProject.file('THIRD-PARTY-NOTICES.md'))
+    inputs.files(rootProject.fileTree('runtime') { exclude '**/__pycache__/**', '**/*.pyc' })
     outputs.dir(layout.buildDirectory.dir('generated/assets'))
 }
 tasks.named('preBuild').configure { dependsOn prepareCatalogue }

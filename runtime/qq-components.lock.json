@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "qq": {
+    "version": "3.2.34-53644",
+    "file": "qq-arm64.deb",
+    "url": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.36/beta/9ee04bef/linuxqq_3.2.34-53644_arm64.deb",
+    "sha256": "181b895cb573548e396e54bb0548cca92ffdc1b1a4b018fa4551bb062385fdca",
+    "size": 207538924,
+    "license": "Tencent terms; downloaded directly from upstream on the phone"
+  },
+  "napcat": {
+    "version": "4.18.42",
+    "file": "napcat-shell.zip",
+    "url": "https://github.com/NapNeko/NapCatQQ/releases/download/v4.18.42/NapCat.Shell.zip",
+    "sha256": "02e5ff0f79916c1e04c81c1b4590056406fb4293f1f1300c955e71fd08b2829d",
+    "size": 35967555,
+    "license": "Upstream complete distribution; downloaded directly on the phone"
+  }
+}

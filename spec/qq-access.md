@@ -17,6 +17,8 @@
 
 ## 参考代码与接口差异
 
+本版实现采用 NapCat Shell 的私有 Linux ARM64 运行路径；固定组件在 `../runtime/qq-components.lock.json`，普通 QQ 小号接入源码在 `../runtime/mobile_console.py`。已核对固定 QQ 包结构、NapCat 启动文件和网络配置 schema，设备内核兼容与真实收发仍须验收。选择它是为了沿用参考项目所需接口，不能据此宣称风险更低。
+
 参考项目的 `02-服务器版/bot/onebot.py` 提供私聊、群聊、文件上传、消息/历史、空间和 Cookie 调用；`flow_media.py` 还用 `get_file` 作为普通附件读取兜底。
 
 SnowLuma 文档的 `get_file` 仅覆盖图片、语音缓存，群文件需改用 `get_group_file_url`。因此“动作名称兼容”不等于不改就能用。语音、图片路径、历史游标、引用编号、空间 Cookie、发送超时与去重均要按本实例场景验证。

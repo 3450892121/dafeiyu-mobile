@@ -23,7 +23,14 @@ test('不能把缺少验收证据的功能标为完成', async () => {
 test('有条件省略也需要记录原因', async () => {
   const data = await loadCatalogue();
   data.features.find(feature => feature.id === 'cover').status = 'omitted';
+  delete data.features.find(feature => feature.id === 'cover').omissionReason;
   assert.ok(validateCatalogue(data).some(error => error.includes('省略缺少授权或理由')));
+});
+
+test('不能把没有源码和隔离检查依据的功能标为已实现',async()=>{
+  const data=await loadCatalogue();data.features[0].status='implemented';
+  delete data.features[0].implementation;
+  assert.ok(validateCatalogue(data).some(error=>error.includes('实现缺少源码或隔离证据')));
 });
 
 test('清单来源路径不能越出指定的参考代码范围', async () => {
@@ -52,8 +59,9 @@ test('构建输出范围不能指向参考项目或相邻目录', () => {
   assert.equal(inside(root, root + '-其他'), false);
 });
 
-test('基础应用没有联网、QQ 注入或读取其他应用数据的权限', async () => {
+test('完整应用只申请联网与本机后台运行权限，不读取其他应用数据', async () => {
   const manifest = await readFile(path.join(root, 'app/src/main/AndroidManifest.xml'), 'utf8');
-  assert.doesNotMatch(manifest, /<uses-permission\b/);
+  const actual=[...manifest.matchAll(/<uses-permission\s+android:name="android.permission.([A-Z_]+)"/g)].map(m=>m[1]).sort();
+  assert.deepEqual(actual,['ACCESS_NETWORK_STATE','FOREGROUND_SERVICE','INTERNET','RECEIVE_BOOT_COMPLETED','WAKE_LOCK','POST_NOTIFICATIONS'].sort());
   assert.match(manifest, /android:allowBackup="false"/);
 });
