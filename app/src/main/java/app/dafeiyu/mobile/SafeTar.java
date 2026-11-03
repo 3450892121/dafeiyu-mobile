@@ -62,7 +62,13 @@ public final class SafeTar {
             Path to=member(root,pair[0]),from=member(root,pair[1].replaceFirst("^/+",""));
             ensureParents(root,to.getParent());
             if(!from.toRealPath().startsWith(root.toRealPath()))throw new IOException("归档硬链接越界");
-            Files.createLink(to,from);
+            if(!Files.isRegularFile(from,LinkOption.NOFOLLOW_LINKS))throw new IOException("归档硬链接目标不是普通文件");
+            long copied=Files.size(from);
+            if(copied>MAX_TOTAL-total)throw new IOException("运行归档解压超限");
+            total+=copied;
+            // Android app sandboxes may forbid link(2); the base archive's hard links
+            // are ordinary files, so materialize them without requiring that syscall.
+            Files.copy(from,to,StandardCopyOption.COPY_ATTRIBUTES);
         }
     }
 
