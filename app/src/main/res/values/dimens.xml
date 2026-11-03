@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="page_padding">20dp</dimen>
+    <dimen name="card_padding">20dp</dimen>
+    <dimen name="space_small">8dp</dimen>
+    <dimen name="space_medium">12dp</dimen>
+    <dimen name="space_large">20dp</dimen>
+    <dimen name="corner">20dp</dimen>
+    <dimen name="outline_width">1dp</dimen>
+    <dimen name="title_text">28sp</dimen>
+    <dimen name="heading_text">18sp</dimen>
+    <dimen name="body_text">15sp</dimen>
+    <dimen name="caption_text">13sp</dimen>
+    <dimen name="touch_height">48dp</dimen>
+    <dimen name="icon_size">56dp</dimen>
+</resources>

@@ -1,0 +1,29 @@
+plugins { id 'com.android.application' }
+
+def releaseInfo = new Properties()
+rootProject.file('version.properties').withInputStream { releaseInfo.load(it) }
+
+android {
+    namespace 'app.dafeiyu.mobile'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'app.dafeiyu.mobile'
+        minSdk 26
+        targetSdk 35
+        versionCode releaseInfo.getProperty('versionCode').toInteger()
+        versionName releaseInfo.getProperty('versionName')
+    }
+    sourceSets.main.assets.srcDirs = [layout.buildDirectory.dir('generated/assets').get().asFile]
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+def prepareCatalogue = tasks.register('prepareCatalogue', Exec) {
+    workingDir rootDir
+    commandLine 'node', 'tools/prepare-assets.mjs'
+    inputs.files(rootProject.file('spec/features.json'))
+    outputs.dir(layout.buildDirectory.dir('generated/assets'))
+}
+tasks.named('preBuild').configure { dependsOn prepareCatalogue }

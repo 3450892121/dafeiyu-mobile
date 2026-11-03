@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">大肥鱼手机版</string>
+    <string name="tagline">从新的相遇开始</string>
+    <string name="phase">开发骨架 · 尚未接入 QQ</string>
+    <string name="phase_detail">这是独立新项目的基础界面，目前还不能登录或回复 QQ。功能是否可用，以逐项验收结果为准。</string>
+    <string name="overview">概览</string>
+    <string name="features">功能</string>
+    <string name="device">本机检查</string>
+    <string name="runtime_title">手机独立运行</string>
+    <string name="runtime_missing">尚未安装 QQ 运行内核</string>
+    <string name="runtime_detail">QQ 接入和熄屏运行仍需手机验证。接入完成后，在这里登录新的机器人小号。</string>
+    <string name="identity_title">一只新的大肥鱼</string>
+    <string name="identity_detail">新的小号，新的聊天和记忆。参考服务器版的功能，不接管原来的机器人。</string>
+    <string name="network_title">联网 AI</string>
+    <string name="network_detail">目标是由手机直接使用你配置的 AI 接口，聊天、记忆和任务在手机处理。</string>
+    <string name="catalogue_title">功能复刻清单</string>
+    <string name="catalogue_detail">下面列的是目标功能。标记为“待实现”的项目目前还不能使用。</string>
+    <string name="optional">手机不可行时可省略</string>
+    <string name="required">完整复刻目标</string>
+    <string name="device_title">本机条件</string>
+    <string name="device_detail">这里只读取当前设备的信息，不连接 QQ，不访问原服务器。</string>
+    <string name="device_disclaimer">配置检查不能代替 QQ 登录和后台运行实测。</string>
+    <string name="check_again">重新检查</string>
+    <string name="catalogue_error">功能清单无法读取，请重新安装完整的应用包。</string>
+    <string name="version_format">基础版本 %1$s</string>
+    <string name="progress_format">%1$d / %2$d 项已验收</string>
+    <string name="required_count_format">%1$d 项完整目标 · %2$d 项按手机能力评估</string>
+    <string name="android_format">安卓 %1$s（%2$d）</string>
+    <string name="memory_format">可用内存 %1$s / 总内存 %2$s</string>
+    <string name="storage_format">应用存储可用 %1$s</string>
+    <string name="cpu_format">处理器架构：%1$s</string>
+    <string name="arm64_yes">检测到 64 位 ARM，可继续评估 QQ 运行层。</string>
+    <string name="arm64_no">未检测到 64 位 ARM，需要先核对 QQ 运行层兼容性。</string>
+</resources>

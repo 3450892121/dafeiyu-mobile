@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#F3F7F8</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="ink">#17333C</color>
+    <color name="muted">#5D747A</color>
+    <color name="accent">#087F8C</color>
+    <color name="accent_soft">#E0F1F1</color>
+    <color name="warning">#77551C</color>
+    <color name="warning_soft">#FFF3D9</color>
+    <color name="outline">#DDE8EB</color>
+</resources>
