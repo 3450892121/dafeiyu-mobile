@@ -145,7 +145,12 @@ final class NativeRuntime {
 
     private static void bind(List<String> args,String from,String to){Collections.addAll(args,"-b",from+":"+to);}
     private static void link(File target,File source)throws IOException{
-        if(!Files.exists(target.toPath(),LinkOption.NOFOLLOW_LINKS))Files.createSymbolicLink(target.toPath(),source.toPath());
+        Path alias=target.toPath(),actual=source.toPath();
+        if(Files.isSymbolicLink(alias)){
+            if(Files.readSymbolicLink(alias).equals(actual))return;
+            Files.delete(alias); // An app update can move the extracted native libraries.
+        }else if(Files.exists(alias,LinkOption.NOFOLLOW_LINKS))throw new IOException("运行组件链接位置已被占用");
+        Files.createSymbolicLink(alias,actual);
     }
 
     void refreshDns() throws Exception {
