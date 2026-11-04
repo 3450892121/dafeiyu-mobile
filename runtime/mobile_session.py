@@ -48,27 +48,52 @@ def qq_environment(home,workdir,environ=None,guest_legacy=None):
     return env
 
 
+def _read_webui(home,port,route):
+    if route not in ('QQLogin/GetQuickLoginList','QQLogin/CheckLoginStatus'):
+        raise ValueError('Only read-only QQ status routes are allowed')
+    config=Path(home)/'Napcat/opt/QQ/resources/app/app_launcher/napcat/config/webui.json'
+    token=str(json.loads(config.read_text(encoding='utf-8')).get('token')or'')
+    if not token:raise ValueError('QQ status credential unavailable')
+    def post(path,body,credential=''):
+        request=urllib.request.Request('http://127.0.0.1:%d/api/'%port+path,
+            data=json.dumps(body).encode(),headers={'Content-Type':'application/json','Authorization':'Bearer '+credential})
+        with urllib.request.urlopen(request,timeout=6)as response:
+            data=response.read(65537)
+        if len(data)>65536:raise ValueError('QQ status response too large')
+        return json.loads(data)
+    auth=post('auth/login',{'hash':hashlib.sha256((token+'.napcat').encode()).hexdigest()})
+    credential=(auth.get('data')or{}).get('Credential')
+    if not credential:raise ValueError('QQ status authentication unavailable')
+    return post(route,{},credential)
+
+
 def saved_login_status(home,uin,port):
     """Read-only backend probe; never returns an upstream payload or login URL."""
     result={'available':False,'saved_account':False}
-    config=Path(home)/'Napcat/opt/QQ/resources/app/app_launcher/napcat/config/webui.json'
     try:
-        token=str(json.loads(config.read_text(encoding='utf-8')).get('token')or'')
-        if not token:return result
-        def post(route,body,credential=''):
-            request=urllib.request.Request('http://127.0.0.1:%d/api/'%port+route,
-                data=json.dumps(body).encode(),headers={'Content-Type':'application/json','Authorization':'Bearer '+credential})
-            with urllib.request.urlopen(request,timeout=6)as response:
-                data=response.read(65537)
-            if len(data)>65536:raise ValueError('QQ status response too large')
-            return json.loads(data)
-        auth=post('auth/login',{'hash':hashlib.sha256((token+'.napcat').encode()).hexdigest()})
-        credential=(auth.get('data')or{}).get('Credential')
-        if not credential:return result
-        reply=post('QQLogin/GetQuickLoginList',{},credential)
+        reply=_read_webui(home,port,'QQLogin/GetQuickLoginList')
         values=reply.get('data')
         if reply.get('code')!=0 or not isinstance(values,list):return result
         result['available']=True
         result['saved_account']=any(str(value)==str(uin) for value in values if isinstance(value,(str,int)))
         return result
     except Exception:return result
+
+
+def login_runtime_status(home,port):
+    result={'available':False,'online':False,'offline':False,'core_ready':False,
+            'phase':'unknown','error_present':False,'verification_required':False}
+    try:
+        reply=_read_webui(home,port,'QQLogin/CheckLoginStatus')
+        data=reply.get('data')
+        if reply.get('code')!=0 or not isinstance(data,dict):return result
+        result.update(available=True,online=data.get('isLogin') is True,
+                      offline=data.get('isOffline') is True,core_ready=data.get('coreReady') is True,
+                      error_present=bool(data.get('loginError')))
+        phase=data.get('loginPhase')
+        if phase in ('initializing','waiting_qrcode','qrcode_scanned','reconnecting','ready','online','error'):
+            result['phase']=phase
+        error=str(data.get('loginError')or'')
+        result['verification_required']=any(word in error for word in ('验证','风控','冻结','被踢','登录受限','异常登录'))
+    except Exception:pass
+    return result

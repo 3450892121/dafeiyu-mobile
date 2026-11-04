@@ -106,6 +106,13 @@ class Control:
                 'login_database_present':any(has_login_database(root)for root in roots.values()),
                 'directory_pinned':(self.home/'data/qq-session-directory.json').is_file()}
 
+    def pipeline_status(self):
+        from mobile_diagnostics import pipeline_status
+        from mobile_session import login_runtime_status
+        result=pipeline_status(self.home,self.cfg)
+        result['qq_runtime']=login_runtime_status(self.home,LAYOUT['ports']['qqWebui'])
+        return result
+
     def save_basic(self, fields):
         allowed={'login_uin','owner_qq','bot_name','owner_name','allow_users','allow_groups','weather_home_city'}
         changes={}
@@ -227,6 +234,7 @@ def server(control,port=None):
                 if route=='/api/status':return self.response(200,control.status())
                 if route=='/api/qqdiagnostic':return self.response(200,control.qq_diagnostics())
                 if route=='/api/qqsession':return self.response(200,control.qq_session())
+                if route=='/api/pipeline':return self.response(200,control.pipeline_status())
                 if route=='/api/urls':return self.response(200,control.urls())
                 if route=='/api/asr':return self.response(200,control.asr_status())
                 if route=='/api/privacy':return self.response(200,control.privacy())

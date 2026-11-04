@@ -3,9 +3,11 @@ import hashlib
 import hmac
 import json
 import re
+from mobile_diagnostics import HookHealth
 
 
 def handler_for(core):
+    health=HookHealth(core.DATA_DIR)
     class MobileHookHandler(core.HookHandler):
         def do_POST(self):
             self.connection.settimeout(10)
@@ -34,9 +36,10 @@ def handler_for(core):
             except (UnicodeError,ValueError):
                 return self._finish(400)
             accepted=instance.enqueue(event) if instance else False
-            self._finish(204 if accepted else 503)
+            self._finish(204 if accepted else 503,event if accepted else None)
 
-        def _finish(self,status):
+        def _finish(self,status,event=None):
+            health.record(status,event)
             self.send_response(status)
             self.send_header('Content-Length','0')
             self.end_headers()
