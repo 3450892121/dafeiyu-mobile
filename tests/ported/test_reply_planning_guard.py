@@ -47,7 +47,7 @@ class ReplyPlanningGuardTests(unittest.TestCase):
         args = ast.arguments(posonlyargs=[], args=[ast.arg(arg='self'), ast.arg(arg='reply')],
                              kwonlyargs=[], kw_defaults=[], defaults=[])
         fn = ast.FunctionDef(name='rewrite', args=args, body=[block, ast.Return(value=ast.Name(id='reply', ctx=ast.Load()))], decorator_list=[])
-        ns = dict(guard=guard, log=lambda *a:None, is_owner=True, name='测试用户', is_group=False)
+        ns = dict(guard=guard, log=lambda *a:None, is_owner=True, name='测试用户', is_group=False, uid=190002)
         exec(compile(ast.fix_missing_locations(ast.Module(body=[fn], type_ignores=[])), '<actual reply rewrite>', 'exec'), ns)
         leak = '学校在山西那边？ （不用列点，短一点） 其实就一句话，不要追问太多。'
         for rewritten, expected in [('明天就回学校啦，路上慢点。', '明天就回学校啦，路上慢点。'), (leak, None)]:

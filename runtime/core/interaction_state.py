@@ -135,7 +135,7 @@ class InteractionState:
                 if kind == 'comparison':
                     rel = self.get_person_relation_effective(qq)
                     # No jealousy over ordinary comparisons by strangers.
-                    if float(rel.get('favor') or 50) < 65:
+                    if float(rel.get('favor') if rel.get('favor') is not None else 50) < 65:
                         moods = {}
                 if kind == 'correction':
                     old_effect = json.loads(prior['effects'] or '{}')

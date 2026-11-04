@@ -41,6 +41,7 @@ import refuse
 import voice
 import cover
 import private_contact
+from relationship_policy import attitude_context
 from blacklist import blocked, policy_scope, policy_changed, generation
 from thread_view import build_thread_block, select_image_references, focus_history
 
@@ -2812,7 +2813,7 @@ class ReplyMixin(object):
             reply = guard.scrub(reply)
             _chk = guard.check(reply)
             if _chk["action"] != "ok":
-                _new = self._guard_rewrite(reply, _chk["reason"], is_owner, name, is_group)
+                _new = self._guard_rewrite(reply, _chk["reason"], is_owner, name, is_group, uid=uid)
                 _chk2 = guard.check(_new) if _new else {"action": "drop"}
                 if _chk2["action"] != "ok":
                     log("guard", "出站拦下：%s" % _chk["reason"])
@@ -2823,7 +2824,8 @@ class ReplyMixin(object):
             if _ti:
                 _new = self._guard_rewrite(
                     reply, "时间对不上", is_owner, name, is_group,
-                    hint="你说的时间和现在对不上（%s）。重说一遍，别写时间和星期；实在要提就按现在说。" % _ti)
+                    hint="你说的时间和现在对不上（%s）。重说一遍，别写时间和星期；实在要提就按现在说。" % _ti,
+                    uid=uid)
                 if _new and not guard.time_issue(_new):
                     reply = _new
                 else:
@@ -3247,10 +3249,14 @@ class ReplyMixin(object):
             log("search", "判断失败 %r，走关键词兜底" % (e,))
             return None
 
-    def _guard_rewrite(self, reply, reason, is_owner, name, is_group, hint=""):
+    def _guard_rewrite(self, reply, reason, is_owner, name, is_group, hint="", uid=0):
         """被护栏拦下的回复：用同一个人设重说一遍（只一次）。"""
         try:
             sys_p = self.persona.system_prompt(is_owner, name, is_group, now_line=now_line())
+            if _as_int(uid) > 0:
+                sys_p += "\n\n" + attitude_context(self, _as_int(uid))
+            sys_p += ("\n这次只修正护栏指出的问题，保留原回复的事实和相处态度；"
+                      "不把原来的疏远、克制或戒备自动改成热情、亲昵或迎合。")
             ask = hint or guard.rewrite_hint(reason)
             r = self.pool.chat(sys_p, [], "你上一条要说的是：%s\n\n%s" % (str(reply or "")[:200], ask),
                                max_tokens=140, temperature=0.7, thinking=False)

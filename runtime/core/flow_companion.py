@@ -15,6 +15,7 @@ from onebot import text_seg
 from blacklist import policy_scope
 from thread_view import focus_history
 from conversation_understanding import context_reply_attributions
+from relationship_policy import attitude_context
 
 
 def companion_text_focus(rows, text_only=False):
@@ -132,6 +133,13 @@ class CompanionMixin:
             is_owner = bool(current_uid and current_uid == _as_int(self.cfg.get("owner_qq")))
             system = self.persona.system_prompt(is_owner, current.get("sender_name") or "", True,
                                                 now_line=self._proactive_now_line())
+            if current_uid:
+                # Only the admitted message author owns this attitude. Names, quoted
+                # speakers and forwarded authors cannot select somebody else's record.
+                system += ("\n\n# 当前发言人的相处背景（内部判断）\n"
+                           "以下只对应当前真实发言账号QQ%d，不套给全群，也不套给引用或转发中的其他人。"
+                           "判断reply/quiet和起草接话都参考这段关系；认真具体的求助不因关系自动拒绝。\n"
+                           % current_uid) + attitude_context(self, current_uid)
             import scene_continuity
             system += scene_continuity.context(self, conv, current_uid, current.get('text') or '',
                                                current.get('message_id'))

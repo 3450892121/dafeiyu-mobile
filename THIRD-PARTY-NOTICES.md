@@ -38,7 +38,7 @@ NapCat 作为未经修改的完整独立组件运行，本项目通过公开接�
 
 ## 内置 Linux 二进制的对应源码
 
-`runtime/linux-sources.lock.json` 按内置 Ubuntu 基础归档中的已安装包和新增 deb 的 `Source` 字段记录去重后的精确源码包版本、原始下载来源和摘要。公开完整安装包时，必须同时提供 `dist/dafeiyu-mobile-0.3.0-linux-sources.zip`，其中包含相应 `.dsc`、上游原始源码归档、Debian/Ubuntu 补丁与构建文件、清单和使用说明；不能用仅有下载首页或后续版本的源码代替。此源码附件不需要安装到手机。
+`runtime/linux-sources.lock.json` 按内置 Ubuntu 基础归档中的已安装包和新增 deb 的 `Source` 字段记录去重后的精确源码包版本、原始下载来源和摘要。公开完整安装包时，必须同时提供与该版 APK 对应的 `dist/*-linux-sources.zip`，其中包含相应 `.dsc`、上游原始源码归档、Debian/Ubuntu 补丁与构建文件、清单和使用说明；不能用仅有下载首页或后续版本的源码代替。此源码附件不需要安装到手机。
 
 同一源码附件另含 qrcode-terminal 的原始 PyPI sdist 与本地通用 wheel 打包配方；它的 MIT 许可与 Linux 包的 GPL/LGPL 等许可分别适用。
 

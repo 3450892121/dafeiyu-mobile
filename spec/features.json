@@ -186,15 +186,21 @@
         "02-服务器版/bot/flow_memory.py",
         "02-服务器版/bot/store.py"
       ],
-      "evidence": "以新小号接触的实际账号关联人物，情绪与长期关系分开变化。",
+      "evidence": "以新小号接触的实际账号关联人物，情绪与长期关系分开变化；低好感和低信任实际参与回复、群自主接话及主动私聊判断，熟悉度不抵消疏远或戒心，具体求助及权限边界独立处理。",
       "implementation": [
         "runtime/core/interaction_state.py",
         "runtime/core/flow_memory.py",
+        "runtime/core/relationship_policy.py",
         "runtime/core/store.py"
       ],
       "offlineTests": [
         "tests/ported/test_interaction_state.py",
         "tests/ported/test_emotion_regulation.py",
+        "tests/mobile/test_relationship_attitude.py",
+        "tests/mobile/test_relationship_policy.py",
+        "tests/mobile/test_relationship_zero_scores.py",
+        "tests/mobile/test_person_relationship_save.py",
+        "tests/mobile/test_relationship_rewrite.py",
         "tests/mobile/test_mobile_runtime.py"
       ]
     },
@@ -350,6 +356,8 @@
       "offlineTests": [
         "tests/ported/test_reply_autonomy.py",
         "tests/ported/test_sleep_memory.py",
+        "tests/mobile/test_relationship_policy.py",
+        "tests/mobile/test_proactive_relationships.py",
         "tests/mobile/test_mobile_runtime.py"
       ]
     },
@@ -373,6 +381,7 @@
       "offlineTests": [
         "tests/ported/test_self_growth_proactive.py",
         "tests/ported/test_private_contact_extra_paths.py",
+        "tests/mobile/test_companion_relationships.py",
         "tests/mobile/test_mobile_runtime.py"
       ]
     },

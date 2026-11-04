@@ -31,6 +31,7 @@ from safety import allow_outbound
 from util import log, log_exc
 from common import WEEK, _as_int, _int_list, bot_identity_note, message_targets_bot, parse_other_bots
 from proactive_hooks import build_hooks, topic_overlap, HOOK_LABELS, STRONG
+from relationship_policy import attitude_context, relation_state
 import guard
 
 
@@ -242,11 +243,8 @@ class ProactiveMixin(object):
             ls = int(last_seen.get(uid) or 0)
             # 私聊安静以 last_active 为准；从没私聊过的人用 last_seen 兜底
             activity = last_active or ls
-            try:
-                rel = self.store.get_person_relation(uid) or {}
-            except Exception:
-                rel = {}
-            favor = int(rel.get("favor") or 50)
+            relation = relation_state(self, uid)
+            favor = relation["favor"]
             name = nick.get(uid) or names.get(conv) or ""
             if not name:
                 try:
@@ -256,7 +254,7 @@ class ProactiveMixin(object):
             out.append({
                 "uid": uid, "conv": conv, "nick": name or str(uid),
                 "last_active": last_active, "last_seen": ls, "activity": activity,
-                "favor": favor, "is_owner": bool(owner and uid == owner),
+                "favor": favor, "trust": relation["trust"], "is_owner": bool(owner and uid == owner),
             })
         # 主人永远第一；其他人按最近动静（last_active 优先，没有就 last_seen）排
         out.sort(key=lambda x: (0 if x["is_owner"] else 1, -x["activity"], -x["favor"], x["uid"]))
@@ -582,7 +580,7 @@ class ProactiveMixin(object):
         tier = cand.get("tier") or TIER_HOT
         lines = [
             "现在是%s（%s），%s。" % (self._proactive_now_line(), _daypart(now.tm_hour), since),
-            "你想主动给「%s」发一句，不是回复他，是你自己先开口。" % nick,
+            "你正在考虑是否主动给「%s」发一句；这不是回复他，也不是必须开口。" % nick,
         ]
         if hook:
             lines += [
@@ -622,7 +620,9 @@ class ProactiveMixin(object):
                 lines += ["", "另外记住：", _rn]
         except Exception as e:
             log("proactive", "提醒备注注入失败 %r" % (e,))
-        lines += ["", "只输出这一句话。"]
+        lines += ["", "先结合你对这个人的亲近意愿和戒心判断是否想主动联系；最近常聊或认识很久不代表关系亲近。",
+                  "不想主动找他、关系疏远或由头不合适时，可以输出空字符串，结束本次闲聊开场。",
+                  "愿意联系才只输出这一句话；此判断不取消已承诺的提醒，也不拒绝对方当前的认真求助。"]
         return "\n".join(lines)
 
     def _proactive_personal_context(self, system, conv, uid, text="", is_owner=False, with_ids=False):
@@ -637,6 +637,8 @@ class ProactiveMixin(object):
         persona = getattr(self, "persona", None)
         if hasattr(persona, "relation_context"):
             system += persona.relation_context(is_owner)
+        if int(uid or 0) > 0:
+            system += "\n\n" + attitude_context(self, uid)
         system += TURN_RULES
         system += "\n主动联系也核对素材里的人物与项目归属。不能把同一个人的研究、感情或旧计划拼成新事件；未经原话支持不补动机。"
         return (system, provided) if with_ids else system
@@ -649,6 +651,7 @@ class ProactiveMixin(object):
                 log("growth", "主动回复背景关联未记录 %s" % type(exc).__name__)
 
     def _proactive_generate(self, cand, idle_min, hook=None):
+        cand.pop("_proactive_declined", None)
         try:
             system = self.persona.system_prompt(
                 cand["is_owner"], cand.get("nick") or "对方", False,
@@ -669,10 +672,14 @@ class ProactiveMixin(object):
             except Exception as e:
                 log("proactive", "生成失败 %r" % (e,))
                 return ""
-            text = self._proactive_clean_text(getattr(r, "text", "") if getattr(r, "ok", False) else "")
+            raw = str(getattr(r, "text", "") or "")
+            success = bool(getattr(r, "ok", False))
+            text = self._proactive_clean_text(raw if success else "")
             if not text:
-                prompt += "\n\n别空着，只回一句话。"
-                continue
+                # Only an originally empty successful output expresses abstention.
+                # Cleaning a nonempty label/face marker to nothing is a format failure.
+                cand["_proactive_declined"] = success and not raw.strip().strip('"\'“”‘’').strip()
+                return ""
             if len(text) < 4:
                 prompt += "\n\n刚才那句太短了，像敷衍；说完整一点（20~45 个字）。"
                 continue
@@ -717,6 +724,8 @@ class ProactiveMixin(object):
             return {"ok": False, "reason": contact.reason}
         text = self._proactive_generate(cand, idle_min, hook)
         if not text:
+            if cand.get("_proactive_declined"):
+                return {"ok": False, "reason": "本轮不想主动联系"}
             msg = "生成失败 %s(%s)" % (cand.get("nick"), uid)
             log("proactive", msg)
             try:

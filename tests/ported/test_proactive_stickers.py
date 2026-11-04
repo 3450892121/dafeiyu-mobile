@@ -104,7 +104,7 @@ class ProactiveStickerTests(unittest.TestCase):
         bot.store.conv_names = lambda: {"p:30": "陌生人"}
         bot.store.people_overview = lambda *args: [{"qq": 30, "last_seen": 100000}]
         bot.store.get_session = lambda conv: {"last_active": 100000}
-        bot.store.get_person_relation = lambda uid: {}
+        bot.store.get_person_relation_effective = lambda uid, *args: {}
         self.assertEqual({x["uid"] for x in bot._friend_candidates()}, {10, 20})
 
     def test_brief_does_not_fabricate_new_inbound_message(self):

@@ -851,7 +851,7 @@ class Store(BlacklistStore, DreamStore, MemoryLifecycle, InteractionState, SelfG
             try:
                 for r in self.conn.execute("SELECT * FROM relations").fetchall():
                     conv = str(r["conv"] or "")
-                    favor = max(0, min(100, int(r["favor"] or 50)))
+                    favor = max(0, min(100, int(r["favor"] if r["favor"] is not None else 50)))
                     ts = int(r["updated_at"] or 0)
                     if conv.startswith("p:"):
                         qq = int(conv[2:] or 0)
@@ -3270,7 +3270,7 @@ class Store(BlacklistStore, DreamStore, MemoryLifecycle, InteractionState, SelfG
         qq = int(qq or 0)
         if not qq:
             return 50
-        new = max(0, min(100, int(favor or 50)))
+        new = max(0, min(100, int(favor if favor is not None else 50)))
         reason = " ".join(str(reason or "").split())[:80]
         with self._lock:
             row = self.conn.execute("SELECT favor FROM person_relations WHERE qq=?", (qq,)).fetchone()
@@ -3349,7 +3349,7 @@ class Store(BlacklistStore, DreamStore, MemoryLifecycle, InteractionState, SelfG
         qq = int(qq or 0)
         if not qq:
             return 30
-        new = max(0, min(95, int(trust or 30)))
+        new = max(0, min(95, int(trust if trust is not None else 30)))
         reason = " ".join(str(reason or "").split())[:80]
         with self._lock:
             row = self.conn.execute("SELECT trust FROM person_relations WHERE qq=?", (qq,)).fetchone()
@@ -3694,7 +3694,7 @@ class Store(BlacklistStore, DreamStore, MemoryLifecycle, InteractionState, SelfG
                 "qq": qq, "name": name, "aliases": aliases,
                 "first_seen": _fs, "last_seen": last_seen,
                 "msg_count": msg_count,
-                "favor": int(round(self.effective_favor(rel.get("favor") or 50, rel.get("updated_at"), 90))),
+                "favor": int(round(self.effective_favor(rel.get("favor"), rel.get("updated_at"), 90))),
                 "trust": int(round(self.effective_trust(rel.get("trust") if rel.get("trust") is not None else 30,
                                                          rel.get("updated_at"), 180))),
                 "reason": _dec(rel.get("reason") or ""),
@@ -4016,7 +4016,7 @@ class Store(BlacklistStore, DreamStore, MemoryLifecycle, InteractionState, SelfG
         for x in rows:
             members.append({"qq": x["qq"], "name": x["pname"] or x["name"] or str(x["qq"]),
                             "count": x["c"],
-                            "favor": int(round(self.effective_favor(x["favor"] or 50, x["updated_at"], 90))),
+                            "favor": int(round(self.effective_favor(x["favor"], x["updated_at"], 90))),
                             "mem_count": int(x["mem_count"] or 0)})
         mood = self.get_group_mood(gid)
         mood_eff = int(round(self.effective_group_mood((mood or {}).get("mood"), (mood or {}).get("updated_at"), 7))) if mood else 50

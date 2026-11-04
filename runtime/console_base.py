@@ -2442,9 +2442,9 @@ def main():
                             card if card is not None else (old.get("card") or ""),
                             recent=recent if recent is not None else None,
                             evidence=old.get("evidence"))
-                    if str(form.get("favor") or "").strip() not in ("", "None"):
+                    if str(form.get("favor")).strip() not in ("", "None"):
                         sup.store.set_favor(qq, int(float(str(form.get("favor")))), "面板手动调整")
-                    if str(form.get("trust") or "").strip() not in ("", "None"):
+                    if str(form.get("trust")).strip() not in ("", "None"):
                         sup.store.set_trust(qq, int(float(str(form.get("trust")))), "面板手动调整")
                     self._json(200, {"ok": True})
                 except Exception as e:

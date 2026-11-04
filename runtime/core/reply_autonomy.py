@@ -3,6 +3,7 @@ import json
 import math
 import threading
 import time
+from relationship_policy import attitude_context, relation_state
 
 KEY = 'reply_autonomy:v1'
 LOCK = threading.RLock()
@@ -180,7 +181,7 @@ def choose(bot, conv, uid, name, is_owner, is_group, text, ev, images=None, file
         # No private emotion reasons, other conversations, memories or third-party dossiers.
         moods = [{'kind': x.get('kind'), 'intensity': round(float(x.get('intensity') or 0), 1)}
                  for x in bot.store.get_emotions(uid)[:3]]
-        relation = bot.store.get_person_relation(uid) or {}
+        relation = relation_state(bot, uid)
         # A classifier must not imitate assistant turns or obey chat formatting instructions.
         # Personality and transcript are data, not another live conversation to answer.
         if hasattr(bot.persona, 'reload_if_changed'):
@@ -194,6 +195,7 @@ def choose(bot, conv, uid, name, is_owner, is_group, text, ev, images=None, file
                    '触发': trigger or ('private' if not is_group else 'group'),
                    '状态': {k: state[k] for k in ('mode', 'energy')}, '对这个人的心情': moods,
                    '关系': {k: relation.get(k) for k in ('favor', 'trust')},
+                   '关系含义与边界': attitude_context(bot, uid, relation),
                    '未读附件数量': {'图片': len(images or []), '文件': len(files or []), '语音': len(records or [])}}
         if trigger=='poke':
             payload['非语言互动']={'action':'拍一拍','speech':False,'actor':uid,'target':bot.self_id}

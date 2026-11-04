@@ -91,7 +91,8 @@ class Tests(unittest.TestCase):
         pool=SimpleNamespace(chat=Mock(return_value=SimpleNamespace(ok=True,text='{"act":"quiet"}')))
         bot=SimpleNamespace(self_id=99,cfg={'self_growth_enabled':False},pool=pool,
             store=SimpleNamespace(messages_for_context=lambda *a,**k:history,
-                thread_rows=lambda *a:[current],get_setting=lambda *a:'',add_log=Mock()),
+                thread_rows=lambda *a:[current],get_setting=lambda *a:'',add_log=Mock(),
+                get_person_relation_effective=lambda *a:dict(favor=50,trust=30)),
             persona=SimpleNamespace(system_prompt=lambda *a,**k:'虚构人设'),
             _companion_enabled=lambda *a:True,_is_group_speak_quiet=lambda:False,
             _group_speak_last_from_bot=lambda *a:False,_proactive_now_line=lambda:'测试时间',
