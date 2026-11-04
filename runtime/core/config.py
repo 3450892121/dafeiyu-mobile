@@ -529,6 +529,7 @@ STR_ENUMS = {
     "model_reasoning_effort": ("low", "medium", "high", "auto"),
 }
 MASK = "***"
+SECRET_FIELDS = ("api_key", "onebot_token", "admin_token", "alert_smtp_pass")
 
 
 class DecryptError(Exception):
@@ -537,31 +538,41 @@ class DecryptError(Exception):
 
 class Config(object):
     def __init__(self, path=None):
-        self.path = path or CONFIG_PATH
+        self.path = os.fspath(path or CONFIG_PATH)
         self._lock = threading.RLock()
         self.data = dict(DEFAULTS)
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        directory = os.path.dirname(self.path)
+        established = os.path.isfile(self.path + ".bak") or (
+            os.path.basename(self.path) == "config.json" and any(
+                os.path.isfile(os.path.join(directory, name)) for name in ("runtime-ready.json", "bot.db")))
+        loaded = None
         if os.path.exists(self.path):
             try:
                 with open(self.path, "r", encoding="utf-8") as f:
                     loaded = json.load(f)
-                if isinstance(loaded, dict):
-                    self.data.update(loaded)
+                if not isinstance(loaded, dict) or (established and not loaded):
+                    raise ValueError("已有配置必须是有效的非空 JSON 对象")
+                self.data.update(loaded)
             except Exception as e:
                 bad = self.path + ".bad-" + time.strftime("%Y%m%d-%H%M%S")
                 try:
                     shutil.copy2(self.path, bad)
                 except Exception:
                     pass
-                raise SystemExit("config.json 解析失败，已备份到 %s：%r" % (bad, e))
+                raise SystemExit("config.json 无法读取，原文件未改动，请检查本实例配置或加密备份") from e
+        elif established:
+            raise SystemExit("已有实例的配置文件缺失，请检查备份；已停止初始化并保留现有资料")
         # 严格解密：解不开就报错退出，绝不把空值当"已配置"再写回文件
         try:
-            self._decrypt_secrets(self.data)
+            needs_encryption = self._decrypt_secrets(self.data)
         except DecryptError as e:
             log("config", "严格解密失败：%s（原文件未改动）" % e)
             raise SystemExit(
-                "config.json 里的密钥/token 解不开（%s）。文件没有被改动；"
-                "请确认是否换了 Windows 用户/机器，或重新填写 api_key、onebot_token、admin_token。" % e)
+                "本实例的配置无法解密，原文件未改动。请检查手机上的原实例资料或恢复本实例的加密备份。") from e
+        # Preserve the previous backup when merely reopening a valid configuration.
+        # New defaults, a generated token or a normalized value still need to be persisted.
+        previous = json.dumps(self.data, sort_keys=True) if loaded is not None and loaded.keys() == self.data.keys() else None
         # 解密之后再补默认 token（顺序不能反：先补会把解不开的密文当已配置）
         if not self.data.get("onebot_token"):
             self.data["onebot_token"] = secrets.token_hex(16)
@@ -571,7 +582,8 @@ class Config(object):
         self._validate(self.data, tag="启动")
         if not self.data.get("models"):
             self.data["models"] = [dict(x) for x in DEFAULT_MODELS]
-        self.save()
+        if needs_encryption or previous is None or json.dumps(self.data, sort_keys=True) != previous:
+            self.save()
         self._mtime = self._get_mtime()
 
     # ---------- 解密 / 校验 ----------
@@ -620,14 +632,19 @@ class Config(object):
         return out
 
     def _decrypt_secrets(self, data):
-        for k in ("api_key", "onebot_token", "admin_token", "alert_smtp_pass"):
-            if isinstance(data.get(k), str) and (data[k].startswith("enc1:") or data[k].startswith("enc2:")):
-                data[k] = self._decode_secret(data[k], k)
-        models = data.get("models")
-        if isinstance(models, list):
-            for i, m in enumerate(models):
-                if isinstance(m, dict) and isinstance(m.get("api_key"), str) and (m["api_key"].startswith("enc1:") or m["api_key"].startswith("enc2:")):
-                    m["api_key"] = self._decode_secret(m["api_key"], "models[%d].api_key" % i)
+        fields = [(data, key, key) for key in SECRET_FIELDS]
+        if isinstance(data.get("models"), list):
+            fields.extend((model, "api_key", "models[%d].api_key" % i)
+                          for i, model in enumerate(data["models"]) if isinstance(model, dict))
+        needs_encryption = False
+        for record, key, label in fields:
+            value = record.get(key)
+            if isinstance(value, str) and value:
+                if value.startswith(("enc1:", "enc2:")):
+                    record[key] = self._decode_secret(value, label)
+                else:
+                    needs_encryption = True
+        return needs_encryption
 
     def _validate(self, data, tag="配置"):
         """白名单类型/范围校验：坏值回退默认、数字字符串归一化，最后记一条日志。"""
@@ -997,7 +1014,7 @@ class Config(object):
             # 每个进程用不同的临时名，避免 console 和 brain 同时写互相踩
             tmp = self.path + ".tmp-%d" % os.getpid()
             out = dict(self.data)
-            for k in ("api_key", "onebot_token", "admin_token", "alert_smtp_pass"):
+            for k in SECRET_FIELDS:
                 if isinstance(out.get(k), str) and out[k] and not (out[k].startswith("enc1:") or out[k].startswith("enc2:")):
                     enc = ENC(out[k])
                     if not (isinstance(enc, str) and (enc.startswith("enc1:") or enc.startswith("enc2:"))):

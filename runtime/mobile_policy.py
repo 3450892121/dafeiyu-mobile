@@ -52,6 +52,9 @@ def initialize(home=None):
         fixed = {key: config.DEFAULTS[key] for key in ('onebot_api','webhook_host','webhook_port','admin_port','napcat_webui_port','voice_enabled','voice_tts_url','voice_ref_path','cover_groups','cover_privates')}
         class MobileConfig(original):
             _mobile_policy = True
+            def _validate(self, data, tag="配置"):
+                super()._validate(data, tag)
+                data.update(fixed)
             def get(self, key, default=None):
                 return fixed[key] if key in fixed else super().get(key, default)
             def set(self, key, value):

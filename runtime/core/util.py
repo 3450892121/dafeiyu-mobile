@@ -31,43 +31,53 @@ KEY_PATH = os.path.join(DATA_DIR, ".secret_key")
 _instance_locks = []
 
 
-def _load_key():
-    """本机密钥：第一次用时生成，权限 0600。丢了就再也解不开，配密钥时注意备份。"""
-    os.makedirs(DATA_DIR, exist_ok=True)
-    try:
-        with open(KEY_PATH, "rb") as f:
-            raw = f.read()
-        if len(raw) >= 32:
-            return raw[:32]
-    except FileNotFoundError:
-        pass
-    else:
-        raise ValueError('本实例加密材料损坏，未覆盖原文件')
-    raw = os.urandom(32)
-    try:
-        with open(KEY_PATH, "xb") as f:
-            f.write(raw)
-        try:
-            os.chmod(KEY_PATH, 0o600)
-        except Exception:
-            pass
-    except FileExistsError:
-        # Another process may be creating the same new-instance key.
-        for _ in range(20):
-            with open(KEY_PATH,'rb')as f:existing=f.read()
-            if len(existing)==32:return existing
-            time.sleep(0.05)
-        raise ValueError('本实例加密材料尚未就绪')
+def _read_key():
+    with open(KEY_PATH, "rb") as file:
+        raw = file.read(32)
+    if len(raw) != 32:
+        raise ValueError("本实例加密材料损坏，未覆盖原文件")
     return raw
 
 
-def _fernet():
+def _load_key(create):
+    try:
+        return _read_key()
+    except FileNotFoundError:
+        if not create:
+            raise ValueError("解密所需的本实例密钥缺失")
+    os.makedirs(DATA_DIR, exist_ok=True)
+    # Fresh control/brain processes must publish one complete key, even if a writer is killed.
+    with open(KEY_PATH + ".lock", "a+b") as lock:
+        if IS_WIN:
+            import msvcrt
+            lock.seek(0)
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            return _read_key()
+        except FileNotFoundError:
+            if any(os.path.isfile(os.path.join(DATA_DIR, name)) for name in ("runtime-ready.json", "bot.db")):
+                raise ValueError("已有实例的密钥缺失，已停止生成新密钥")
+        raw = os.urandom(32)
+        temporary = KEY_PATH + ".tmp"
+        with open(temporary, "wb") as file:
+            os.chmod(temporary, 0o600)
+            file.write(raw)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary, KEY_PATH)
+        return raw
+
+
+def _fernet(create):
     """缺少 cryptography 时由写入方明确失败，绝不降级成明文。"""
     try:
         from cryptography.fernet import Fernet
     except Exception:
         return None
-    key = base64.urlsafe_b64encode(_load_key())
+    key = base64.urlsafe_b64encode(_load_key(create))
     return Fernet(key)
 
 
@@ -78,7 +88,7 @@ def dpapi_encrypt(text, strict=False):
     if not raw:
         return ""
     try:
-        f = _fernet()
+        f = _fernet(create=True)
         if f is None:
             raise ValueError("手机版加密组件不可用，拒绝明文保存")
         return PREFIX_V2 + f.encrypt(raw).decode("ascii")
@@ -92,7 +102,7 @@ def dpapi_decrypt(text, strict=False):
     s = str(text)
     if s.startswith(PREFIX_V2):
         try:
-            f = _fernet()
+            f = _fernet(create=False)
             if f is None:
                 return ""
             return f.decrypt(s[len(PREFIX_V2):].encode("ascii")).decode("utf-8", "replace")

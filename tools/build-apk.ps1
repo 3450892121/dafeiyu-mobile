@@ -1,7 +1,9 @@
 param(
     [string]$JdkHome,
     [string]$SdkHome,
-    [switch]$TestOnly
+    [switch]$TestOnly,
+    [switch]$IndependentSigning,
+    [switch]$NewIndependentSigner
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
@@ -50,12 +52,15 @@ New-Item -ItemType Directory -Path $testClasses -Force | Out-Null
 Invoke-Checked $javac @('-encoding','UTF-8','--release','8','-d',$testClasses,
     (Join-Path $projectRoot 'app\src\main\java\app\dafeiyu\mobile\Readiness.java'),
     (Join-Path $projectRoot 'app\src\main\java\app\dafeiyu\mobile\SafeTar.java'),
+    (Join-Path $projectRoot 'app\src\main\java\app\dafeiyu\mobile\VaultFiles.java'),
     (Join-Path $projectRoot 'tests\ReadinessTest.java'),
     (Join-Path $projectRoot 'tests\SafeTarTest.java'),
+    (Join-Path $projectRoot 'tests\VaultFilesTest.java'),
     (Join-Path $projectRoot 'tools\NormalizeZip.java'),
     (Join-Path $projectRoot 'tools\VerifyApk.java'))
 Invoke-Checked $java @('-cp',$testClasses,'app.dafeiyu.mobile.ReadinessTest')
 Invoke-Checked $java @('-cp',$testClasses,'app.dafeiyu.mobile.SafeTarTest',$runRoot)
+Invoke-Checked $java @('-cp',$testClasses,'app.dafeiyu.mobile.VaultFilesTest',$runRoot)
 if ($TestOnly) { return }
 
 if (-not $SdkHome) { $SdkHome = Join-Path $projectRoot '.tools\android-sdk' }
@@ -71,7 +76,16 @@ foreach ($tool in @($androidJar,$aapt2,$aapt,$zipalign,$d8,$apksigner)) {
 }
 
 Push-Location -LiteralPath $projectRoot
+$buildLock = $null
 try {
+    $independent = $IndependentSigning -or $NewIndependentSigner
+    $signingMode = if ($NewIndependentSigner) { 'new-independent' } elseif ($independent) { 'independent' } else { 'official' }
+    $dist = if ($independent) { Project-Output 'dist\independent' } else { Project-Output 'dist' }
+    New-Item -ItemType Directory -Path $dist -Force | Out-Null
+    # Serialize key initialization and output replacement within this signing channel.
+    $buildLock = [IO.File]::Open((Join-Path $dist '.build.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    $signingAction = & node tools/apk-update.mjs plan $signingMode
+    if ($LASTEXITCODE -ne 0) { throw 'APK signing identity is unavailable.' }
     Invoke-Checked 'node' @('tools\check-project.mjs')
     Invoke-Checked 'node' @('tools\prepare-assets.mjs')
     $version = ConvertFrom-StringData (Get-Content -LiteralPath 'version.properties' -Raw)
@@ -135,33 +149,43 @@ try {
     Invoke-Checked $jar @('--update','--no-compress','--file',$unsigned,'-C',(Join-Path $runRoot 'native'),'lib')
     Invoke-Checked $zipalign @('-P','16','-f','4',$unsigned,$aligned)
 
-    # Local development signing only; never reads another project's or production keys.
+    # Official updates must reuse the established key. Independent builds use a separate output and key.
     $signingRoot = Project-Output '.local\signing'
-    New-Item -ItemType Directory -Path $signingRoot -Force | Out-Null
-    $signingFile = Join-Path $signingRoot 'development.jks'
-    if (-not (Test-Path -LiteralPath $signingFile)) {
+    $signingFile = Join-Path $signingRoot $(if ($independent) { 'independent.jks' } else { 'development.jks' })
+    if ($signingAction -eq 'create') {
+        if (!$NewIndependentSigner -or (Test-Path -LiteralPath $signingFile)) { throw 'Refusing to generate a replacement signer.' }
+        New-Item -ItemType Directory -Path $signingRoot -Force | Out-Null
         Invoke-Checked $keytool @('-genkeypair','-keystore',$signingFile,'-alias','development',
             '-storepass','android','-keypass','android','-keyalg','RSA','-keysize','2048',
             '-validity','10000','-dname','CN=Dafeiyu Mobile Development','-noprompt')
     }
-    $dist = Project-Output 'dist'
-    New-Item -ItemType Directory -Path $dist -Force | Out-Null
-    $apk = Join-Path $dist ('dafeiyu-mobile-' + $version.versionName + '-arm64.apk')
+    $apkName = 'dafeiyu-mobile-' + $version.versionName + $(if ($independent) { '-independent-arm64.apk' } else { '-arm64.apk' })
+    $apk = Join-Path $runRoot $apkName
     Invoke-Checked $java @('-jar',$apksigner,'sign','--ks',$signingFile,'--ks-key-alias','development',
-        '--ks-pass','pass:android','--key-pass','pass:android','--out',$apk,$aligned)
+        '--ks-pass','pass:android','--key-pass','pass:android','--v4-signing-enabled','true','--out',$apk,$aligned)
     Invoke-Checked $java @('-jar',$apksigner,'verify','--verbose',$apk)
     Invoke-Checked $zipalign @('-c','-P','16','4',$apk)
     Invoke-Checked $aapt @('dump','badging',$apk)
     Invoke-Checked $java @('-cp',$testClasses,'VerifyApk',$apk,
         (Join-Path $projectRoot 'app\build\generated\assets\runtime\payload-manifest.json'),
         (Join-Path $projectRoot 'app\build\generated\assets\runtime\offline\manifest.json'))
+    Invoke-Checked 'node' @('tools/apk-update.mjs','verify',$signingMode,$java,$apksigner,$aapt,$apk,$version.versionName,$version.versionCode)
     Invoke-Checked 'node' @('tools\fetch-native-sources.mjs','--check')
     $sourceStage = & node 'tools\package-native-sources.mjs'
     if($LASTEXITCODE -ne 0){throw 'Native source packaging failed.'}
     $sourceArchive = Join-Path $dist ('dafeiyu-mobile-' + $version.versionName + '-native-sources.zip')
     Invoke-Checked $jar @('--create','--file',$sourceArchive,'-C',([string]$sourceStage),'.')
+    # Keep the last good APK in place until signature, update and asset checks all pass.
+    foreach ($suffix in @('.idsig','')) {
+        $from = $apk + $suffix
+        $to = (Join-Path $dist $apkName) + $suffix
+        if ([IO.File]::Exists($to)) { [IO.File]::Replace($from,$to,[NullString]::Value) }
+        else { [IO.File]::Move($from,$to) }
+    }
+    $apk = Join-Path $dist $apkName
     Get-FileHash -LiteralPath $apk -Algorithm SHA256 | Format-List
     Write-Output "APK: $apk"
 } finally {
+    if ($buildLock) { $buildLock.Dispose() }
     Pop-Location
 }

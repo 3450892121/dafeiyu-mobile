@@ -4,9 +4,9 @@
 
 **当前为公开测试版，尚未完成全部真机验收，不承诺安装后零配置运行或长期后台稳定。**
 
-**[点击下载 Android ARM64 安装包（APK）](https://github.com/3450892121/dafeiyu-mobile/releases/download/v0.3.1-beta.2/dafeiyu-mobile-0.3.1-arm64.apk)**
+**[点击下载 Android ARM64 安装包（APK）](https://github.com/3450892121/dafeiyu-mobile/releases/download/v0.3.2-beta.1/dafeiyu-mobile-0.3.2-arm64.apk)**
 
-[全部附件、校验与测试版说明](https://github.com/3450892121/dafeiyu-mobile/releases/tag/v0.3.1-beta.2) · [更新日志](CHANGELOG.md) · [所有历史版本](https://github.com/3450892121/dafeiyu-mobile/releases)
+[全部附件、校验与测试版说明](https://github.com/3450892121/dafeiyu-mobile/releases/tag/v0.3.2-beta.1) · [更新日志](CHANGELOG.md) · [所有历史版本](https://github.com/3450892121/dafeiyu-mobile/releases)
 
 本版已把 Ubuntu、系统依赖、Python 包、NapCat 和 CPU 识别模型放进 APK，安装包较大，准备这些组件不再访问 GitHub、Ubuntu 或 PyPI。**QQ 客户端因没有公开再分发授权，首次仍从腾讯官方 HTTPS 地址下载约 200 MB；QQ 登录、AI 和实际联网功能也仍需网络。** 获取 APK 本身仍受所用下载平台的网络可达性影响，下载后不需要再去 GitHub 补运行组件。
 
@@ -14,7 +14,7 @@ GitHub 右侧 Releases 的 Latest 用于显示当前下载版本；版本标题�
 
 ## 安装与使用
 
-从上方直接下载 `dafeiyu-mobile-0.3.1-arm64.apk`，或进入[发布附件](https://github.com/3450892121/dafeiyu-mobile/releases/tag/v0.3.1-beta.2)查找以 `.apk` 结尾的文件；GitHub 的 “Source code” ZIP 不能安装到手机。自行构建时产物位于 `dist/`。需要安卓 8.0 以上、64 位 ARM，建议至少 6 GB 内存和 6 GB 空闲存储。只安装这个 App，无需另装 Termux。配置自己的 AI 接口和 QQ 小号并完成登录后才可使用；安装包不含任何人的密钥或登录资料。
+从上方直接下载 `dafeiyu-mobile-0.3.2-arm64.apk`，或进入[发布附件](https://github.com/3450892121/dafeiyu-mobile/releases/tag/v0.3.2-beta.1)查找以 `.apk` 结尾的文件；GitHub 的 “Source code” ZIP 不能安装到手机。自行构建时产物位于 `dist/`。需要安卓 8.0 以上、64 位 ARM，建议至少 6 GB 内存和 6 GB 空闲存储。只安装这个 App，无需另装 Termux。配置自己的 AI 接口和 QQ 小号并完成登录后才可使用；安装包不含任何人的密钥或登录资料。
 
 1. 打开软件，点击“初始化 / 修复运行组件”。连接网络和电源，按本机空间提示准备。Ubuntu、系统包、Python、NapCat 和 CPU 识别模型从包内校验、展开和安装；仅 QQ 客户端从固定腾讯官方 HTTPS 来源下载。缺内置文件或校验失败会停止，不偷偷从公网补依赖。此过程仍需一定时间，完成初始化不等于 QQ 已登录。
 2. 打开“设置与管理”，填写**新机器人小号**和与之不同的管理员 QQ 并保存。进入“完整管理页 → 模型”，填写自己的接口地址、模型名及该线路专用密钥，保存后可明确点击测试。软件不赠送模型额度，实际联网调用按所配服务的规则计费。
@@ -27,7 +27,9 @@ GitHub 右侧 Releases 的 Latest 用于显示当前下载版本；版本标题�
 
 设置页会分别提示账号不一致、指定小号已登录但消息接口未接通、消息接口可用。若扫错账号，即使消息接口未启动也会暂停；自行切换到所填小号后，再手动启动机器人。不会自动替换设置中的 QQ 号。
 
-更新使用同签名 APK 覆盖安装，保留本实例资料。QQ 界面和内核登录目录分别固定，检测到唯一已有登录目录时原地沿用；不会为更新清空或复制登录票据。设置页可“检查登录保存状态”，区分保存记录与实际在线。QQ 会话失效时仍须本人处理，目录存在不能当作登录成功。
+**已有用户更新**：先在旧版点“停止运行”，等待服务停止，再打开同来源的新版 APK，在 Android 安装提示中选择“更新”。安装完成后直接进入“设置与管理”，核对原小号、管理员、AI 配置与聊天记录，再点“启动机器人”。日常覆盖升级无需再次初始化、导入备份或重填资料。遇到签名冲突或版本过低时，保留原应用，核对下载来源和版本；卸载或清除应用数据会删除本机实例。
+
+QQ 界面和内核登录目录分别固定，检测到唯一已有登录目录时原地沿用。设置页的“检查登录保存状态”可查看原登录记录是否仍在；QQ 的在线状态另行显示，票据失效时仍需本人登录。
 
 若已保存小号却没有恢复在线，可在设置页点击“使用保存的小号登录”。只按本实例设置的小号尝试一次，不从上游下拉列表猜选账号；有错误、验证或安全暂停时不继续，成功与否以当前在线状态为准。
 
@@ -45,7 +47,7 @@ GitHub 右侧 Releases 的 Latest 用于显示当前下载版本；版本标题�
 
 功能清单仍是唯一状态来源：36 项为 `implemented`（已有源码及隔离证据，待手机验收），2 项为 `omitted`（上述原电脑语音发声/翻唱后端）；没有将它们批量标为真机 `verified`。控制台入口和设置有对应处理，也不等于外部接口或真实发送已经成功。
 
-- 此次发布的 0.3.1 内置组件 APK 尚未完成真机安装、控制台视觉及全部控件操作验收。本次只更新已登录手机的大脑关系代码，在指定私聊和测试群确认了基础文字收发，并用临时合成关系做了真实模型对照。详细结果见[更新日志](CHANGELOG.md)。
+- 0.3.2 已在一台 Android 13 / ARM64 手机上从 0.2.10 保留数据覆盖安装。新版的设备检查和设置页已实际打开，原账号、管理员、角色和 AI 配置仍可读取。旧版的大脑关系对照与指定会话实测，以及本次覆盖前后核对范围，见[更新日志](CHANGELOG.md)。控制台的全部控件仍待逐项操作验证。
 - 脱离电脑后完成对话、落库与提醒，以及干净手机上独立完成内置组件初始化，仍未完整验收。内置资产与依赖静态闭包检查不代替实际 ARM64 APT/PIP 安装；QQ 官方下载和手机内核限制仍需现场核对。
 - 熄屏至少两小时、网络切换后的有限恢复、手机重启后的资料及运行意图保留，仍未完成真机验收；不能用电脑模拟检查代替。
 - 记忆/隐私/成长/梦/日记/提醒等详细行为，语音接收与视频音轨识别、图片理解与生成、文件读写及实际 QQ 交付、歌曲分享、B站与空间真实互动，均未逐项取得完整手机交付证据。需要相应账号、接口权限及会话授权。
@@ -54,7 +56,7 @@ GitHub 右侧 Releases 的 Latest 用于显示当前下载版本；版本标题�
 - 绘图和向量检索受上文固定服务接口限制；既有向量模型默认值与当前套餐的兼容性、CPU 识别耗时仍待实测，不自动换套餐或迁移已有索引。
 - Android Keystore、手机上加密备份的导出/恢复、真实挑战或被踢时的暂停行为仍待现场核对。不要主动触发风控来验证；有挑战时由本人处理。
 
-电脑侧隔离回归、编译和签名检查的本次结果见[该测试版发布说明](https://github.com/3450892121/dafeiyu-mobile/releases/tag/v0.3.1-beta.2)；它们仅证明列出的检查范围。完整判据见 [验收标准](spec/acceptance.md)，未因测试版公开而降低。
+电脑侧隔离回归、编译和签名检查的本次结果见[该测试版发布说明](https://github.com/3450892121/dafeiyu-mobile/releases/tag/v0.3.2-beta.1)；它们仅证明列出的检查范围。完整判据见 [验收标准](spec/acceptance.md)，未因测试版公开而降低。
 
 ## 资料与备份
 
@@ -77,12 +79,14 @@ node tools/fetch-fixed-model.mjs
 .tools/python/python.exe tools/fetch-offline-runtime.py --stage freeze
 .tools/python/python.exe tools/fetch-offline-runtime.py --stage source-zip
 .tools/python/python.exe tools/fetch-wheel-native-sources.py
-.tools/python/python.exe tools/fetch-wheel-native-sources.py --check --append-zip dist/dafeiyu-mobile-0.3.1-linux-sources.zip
+.tools/python/python.exe tools/fetch-wheel-native-sources.py --check --append-zip dist/dafeiyu-mobile-0.3.2-linux-sources.zip
 node tools/check-project.mjs
 node --test tests/*.test.mjs
 powershell -ExecutionPolicy Bypass -File tools/test-runtime.ps1
 powershell -ExecutionPolicy Bypass -File tools/build-apk.ps1
 ```
+
+最后一条是官方更新包的构建命令，要求原签名密钥。它会核对公开版签名指纹、应用包名和版本号，再替换输出文件。从源码自行建立独立安装时，首次给同一脚本传 `-NewIndependentSigner`，后续传 `-IndependentSigning` 并保留原自签密钥。自行签名的 APK 位于 `dist/independent/`，只能覆盖同一自签来源的旧版。
 
 Python 检查环境需要 `runtime/requirements.txt` 的依赖，可通过 `-Python` 指定已有的私有解释器。资源准备还需本项目 Python 的 `packaging`、pip/wheel、Git 自带 GPG；固定模型的分段下载工具使用 GitHub CLI，认证仅留在该 CLI 中。它们都只在构建电脑使用，手机不需要这些工具。Python wheel 目标是 Linux ARM64/Python3.12，补全目标环境标记依赖；少数纯 Python 源码包在电脑上生成通用 wheel，不在手机编译。构建脚本可传 `-JdkHome` 和 `-SdkHome`，默认使用本项目工具目录。APK 通过完整内置资产、资源、DEX、ARM64 库、16 KB ZIP 对齐及签名校验；不修改系统配置或参考项目。
 
