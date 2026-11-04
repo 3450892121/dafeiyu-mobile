@@ -85,6 +85,7 @@ def pipeline_status(home, cfg):
     except (OSError, KeyError, TypeError, ValueError):
         since = max(0, int(time.time()) - 86400)
     result = {'ok': True, 'since': since, 'database_available': False,
+              'brain_paused': bool(cfg.get('bot_paused')),
               'conversations': [], 'model_ok': 0, 'model_failed': 0, 'gates': {},
               'callbacks': {}, 'recent_flags': []}
     # Only configured private contacts and groups; no contact names or message content.

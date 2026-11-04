@@ -14,6 +14,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 from mobile_policy import initialize, config_for_mobile, RUNTIME, LAYOUT
 from mobile_qq_status import public_status
 
@@ -48,14 +49,27 @@ class Control:
             data=urllib.parse.urlencode(fields).encode()
             headers['Content-Type']='application/x-www-form-urlencoded'
         request=urllib.request.Request(url,data=data,headers=headers)
-        with urllib.request.urlopen(request,timeout=30) as response:
-            return json.loads(response.read(8*1024*1024))
+        deadline=time.monotonic()+15
+        while True:
+            try:
+                with urllib.request.urlopen(request,timeout=30) as response:
+                    return json.loads(response.read(8*1024*1024))
+            except urllib.error.URLError as error:
+                # Connection refusal proves no request reached the new panel.
+                # Never replay after an uncertain timeout/reset or an HTTP reply.
+                if not isinstance(error.reason,ConnectionRefusedError):raise
+                if not self.panel or self.panel.poll() is not None:
+                    raise OSError('本机管理进程已退出，请检查本机日志') from None
+                if time.monotonic()>=deadline:
+                    raise OSError('本机管理服务尚未就绪，请检查本机日志') from None
+                time.sleep(0.1)
 
     def status(self):
         result={'ok':True,'phase':'configured' if self.cfg.models() else 'needs_configuration',
                 'model_configured':bool(self.cfg.models()),'owner_configured':bool(int(self.cfg.get('owner_qq') or 0)),
                 'small_account_configured':bool(str(self.cfg.get('login_uin') or '')),
                 'autostart':bool(self.cfg.get('mobile_autostart',False)),
+                'brain_paused':bool(self.cfg.get('bot_paused')),
                 'qq_online':False,'brain_running':False,'panel_ready':False,
                 'qq_connection':public_status('unknown')}
         try:
@@ -73,9 +87,51 @@ class Control:
         return result
 
     def action(self, command):
-        if command not in ('start_all','stop_all','start_napcat','stop_napcat','start_brain','stop_brain','restart_brain','refresh_qr','quick_login'):
+        if command not in ('start_all','stop_all','start_napcat','stop_napcat','start_brain','stop_brain','restart_brain','refresh_qr','quick_login','resume_bot'):
             raise ValueError('不支持的本机操作')
+        if command=='quick_login':return self.resume_saved_login()
+        if command in ('stop_all','stop_napcat'):
+            with self.lock:
+                result=self.panel_request('/api/action',{'cmd':command})
+                if isinstance(result,dict) and result.get('ok') is True:self._saved_login_attempted=False
+                return result
         return self.panel_request('/api/action',{'cmd':command})
+
+    def resume_saved_login(self):
+        from mobile_session import saved_login_status,login_runtime_status
+        with self.lock:
+            uin=str(self.cfg.get('login_uin')or'')
+            if not uin.isdigit() or not 5<=len(uin)<=12 or uin.startswith('0') or uin==str(self.cfg.get('owner_qq')or''):
+                raise ValueError('先设置与管理员不同的机器人小号')
+            state=self.status()
+            if not state.get('panel_ready') or state.get('connection_blocked'):
+                raise ValueError('连接已暂停或管理服务未就绪，请先查看状态；未发起登录')
+            current=login_runtime_status(self.home,LAYOUT['ports']['qqWebui'])
+            if not current['available']:
+                raise ValueError('无法确认 QQ 内核状态，请先启动组件；未发起登录')
+            if current['error_present'] or current['verification_required']:
+                raise ValueError('QQ 有登录错误或验证提示，请本人查看登录页；未继续尝试')
+            if current['online']:
+                if not state.get('qq_online'):
+                    raise ValueError('QQ 身份尚未确认，未切换或重登账号')
+                return {'ok':True,'submitted':False,'message':'指定小号已在线，无需再次登录。'}
+            if current['phase']!='waiting_qrcode':
+                return {'ok':True,'submitted':False,'message':'QQ 正在处理连接，请等待状态更新；未重复发起登录。'}
+            if getattr(self,'_saved_login_attempted',False):
+                raise ValueError('本轮已尝试保存登录，请查看登录页；不会反复重试')
+            saved=saved_login_status(self.home,uin,LAYOUT['ports']['qqWebui'])
+            if not saved['available'] or not saved['saved_account']:
+                raise ValueError('未确认此小号的快速登录记录，请本人查看登录页；未换用其他账号')
+            self._saved_login_attempted=True
+            try:
+                result=self.panel_request('/api/action',{'cmd':'quick_login'})
+                accepted=isinstance(result,dict) and result.get('ok') is True
+            except Exception:accepted=False
+            if not accepted:
+                try:self.panel_request('/api/action',{'cmd':'stop_brain'})
+                except Exception:pass
+                return {'ok':True,'submitted':False,'message':'保存登录未成功，已请求暂停大脑；请查看登录页，不会反复尝试。'}
+            return {'ok':True,'submitted':True,'message':'已提交指定小号的保存登录请求；是否在线以当前状态为准。'}
 
     def qq_diagnostics(self):
         patterns={

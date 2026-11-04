@@ -18,6 +18,7 @@ public final class EngineService extends Service {
     private PowerManager.WakeLock wake;
     private ConnectivityManager.NetworkCallback network;
     private volatile boolean shuttingDown=false;
+    private volatile boolean stopRequested=false;
     private volatile Future<?> activeTask;
     public static String message(){return message;}
     public static boolean busy(){return busy;}
@@ -50,6 +51,7 @@ public final class EngineService extends Service {
     @Override public int onStartCommand(Intent intent,int flags,int id){
         String action=intent==null?OPEN:intent.getAction();
         if(STOP.equals(action)){
+            stopRequested=true;
             getSharedPreferences("runtime",0).edit().putBoolean("keep_running",false).apply();
             if(busy&&activeTask!=null)activeTask.cancel(true);
             work.execute(()->{
@@ -60,6 +62,7 @@ public final class EngineService extends Service {
             return START_NOT_STICKY;
         }
         if(busy)return START_NOT_STICKY;
+        stopRequested=false;
         busy=true;
         activeTask=work.submit(()->{
             try{
@@ -69,7 +72,6 @@ public final class EngineService extends Service {
                 update("正在打开本机管理服务……");runtime.start(this::update);
                 ControlClient client=awaitControl();
                 if(RUN.equals(action)){
-                    getSharedPreferences("runtime",0).edit().putBoolean("keep_running",true).apply();
                     client.post("/api/action",new JSONObject().put("command","start_all"));
                 }
                 render(client.get("/api/status"));
@@ -88,11 +90,20 @@ public final class EngineService extends Service {
         throw new IOException("本机管理服务未就绪",last);
     }
     private void render(JSONObject state){
-        if(!state.optBoolean("autostart")&&!state.optBoolean("brain_running")&&wake!=null&&wake.isHeld())wake.release();
         JSONObject detail=state.optJSONObject("qq_connection");
         String connection=detail==null?"unknown":detail.optString("state","unknown");
+        // Web controls and safety pauses also change the persisted run intent.
+        // An unavailable panel cannot prove a stop or grant permission to resume.
+        if(state.optBoolean("ok")&&state.optBoolean("panel_ready")){
+            boolean resume=!stopRequested&&state.optBoolean("autostart")&&!state.optBoolean("connection_blocked")
+                &&!"identity_mismatch".equals(connection)&&!"paused".equals(connection);
+            if(getSharedPreferences("runtime",0).getBoolean("keep_running",false)!=resume)
+                getSharedPreferences("runtime",0).edit().putBoolean("keep_running",resume).apply();
+        }
+        if(!state.optBoolean("autostart")&&!state.optBoolean("brain_running")&&wake!=null&&wake.isHeld())wake.release();
         if("identity_mismatch".equals(connection))update("登录号与设置的小号不一致，已暂停；请切换账号后手动启动");
         else if(state.optBoolean("connection_blocked"))update("QQ 连接已暂停，请打开登录页检查后手动恢复");
+        else if(state.optBoolean("brain_paused"))update("业务回复已暂停，请在设置中明确恢复；启动不会解除此暂停");
         else if(state.optBoolean("qq_online")&&state.optBoolean("brain_running"))update("QQ 已连接 · 大脑正在本机运行");
         else if(state.optBoolean("qq_online"))update("QQ 已连接，请检查 AI 和管理员设置");
         else if("interface_pending".equals(connection))update("指定小号已登录，机器人消息接口尚未接通");

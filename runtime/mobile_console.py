@@ -67,6 +67,9 @@ def qq_configs(cfg):
 
 
 class MobileSupervisor(_BaseSupervisor):
+    # Only short state/config updates use this lock; never hold it over network I/O.
+    _connection_state_lock=threading.RLock()
+
     def __init__(self):
         self._qq_process=None
         self._brain_process=None
@@ -74,6 +77,7 @@ class MobileSupervisor(_BaseSupervisor):
         self._had_connection=False
         self._connection_failures=0
         self._closing=False
+        self._saved_login_attempted=False
         self._identity_lock=threading.Lock()
         self._identity_checked_at=None
         self._identity_expected=''
@@ -93,7 +97,7 @@ class MobileSupervisor(_BaseSupervisor):
             client=OneBot(self.cfg.get('onebot_api'),self.cfg.get('onebot_token'),timeout=3)
             status=client.call('get_status') or {}
             if status.get('online') is not True:
-                if self._had_connection and status.get('online') is False:
+                if self._had_connection:
                     self._stop(self._brain_process)
                 return None
             info=client.get_login_info()or{}
@@ -102,6 +106,8 @@ class MobileSupervisor(_BaseSupervisor):
             self._identity_state='connected'
             return info
         except Exception:
+            if self._had_connection:
+                self._stop(self._brain_process)
             # A different scanned account has no configured OneBot port. Check its
             # live WebUI identity independently instead of treating it as logged out.
             self._probe_qq_identity()
@@ -196,13 +202,21 @@ class MobileSupervisor(_BaseSupervisor):
         return self._stop(self._brain_process)
 
     def stop_napcat(self):
-        self.user_stopped=True
+        with self._connection_state_lock:
+            self.user_stopped=True
+            self._saved_login_token=None
+            self._login_stop_generation=getattr(self,'_login_stop_generation',0)+1
         brain=self._stop(self._brain_process)
-        return self._stop(self._qq_process) and brain
+        stopped=self._stop(self._qq_process) and brain
+        if stopped:
+            with self._connection_state_lock:self._saved_login_attempted=False
+        return stopped
 
     def _poll_connection(self):
         if self.user_stopped or self._connection_blocked:return
-        info=self.login_info() if self.napcat_running() else None
+        running=self.napcat_running()
+        if not running and self._had_connection:self._stop(self._brain_process)
+        info=self.login_info() if running else None
         if info:
             if str(info.get('user_id'))!=str(self.cfg.get('login_uin')):
                 self.block_connection('当前登录号与本实例新小号不符，已暂停；请手动核对');return
@@ -221,10 +235,44 @@ class MobileSupervisor(_BaseSupervisor):
             # Only observe QQ's own transport recovery; never refresh a QR, force login or change identity.
 
     def quick_login(self):
-        self._connection_blocked=False
-        self._had_connection=False
-        self.user_stopped=False
-        return super().quick_login()
+        from mobile_session import saved_login_status,login_runtime_status
+        with self.lock:
+            with self._connection_state_lock:
+                stop_generation=getattr(self,'_login_stop_generation',0)
+            uin=str(self.cfg.get('login_uin')or'')
+            if not re.fullmatch(r'[1-9][0-9]{4,11}',uin) or uin==str(self.cfg.get('owner_qq')or''):
+                return False
+            if self._connection_blocked or getattr(self,'_saved_login_attempted',False):return False
+            current=login_runtime_status(HOME,LAYOUT['ports']['qqWebui'])
+            if not current['available']:return False
+            if current['error_present'] or current['verification_required']:
+                self.block_connection('QQ 有登录错误或验证提示，请本人查看登录页；未继续尝试')
+                return False
+            if current['online']:
+                return bool(self.login_info())
+            if current['phase']!='waiting_qrcode':return False
+            saved=saved_login_status(HOME,uin,LAYOUT['ports']['qqWebui'])
+            if not saved['available'] or not saved['saved_account']:
+                self._log_console('未确认指定小号的可用保存记录，请本人查看登录页；未发起快速登录')
+                return False
+            # Claim the attempt before I/O so both management entry points share it.
+            with self._connection_state_lock:
+                if self._connection_blocked or getattr(self,'_login_stop_generation',0)!=stop_generation:return False
+                self._saved_login_attempted=True
+                attempt=object()
+                self._saved_login_token=attempt
+            try:accepted=super().quick_login()
+            except Exception:accepted=False
+            if not accepted:
+                self.block_connection('保存登录未成功，已暂停；请本人查看登录页，不会反复尝试')
+                return False
+            with self._connection_state_lock:
+                if self._connection_blocked or self._saved_login_token is not attempt:return False
+                self._had_connection=False
+                self._connection_failures=0
+                self.user_stopped=False
+                self.cfg.set('mobile_autostart',True)
+            return True
 
     def _remember_uin(self, uin):
         # Observing another account never grants permission to replace the selected small account.
@@ -233,9 +281,10 @@ class MobileSupervisor(_BaseSupervisor):
             self.block_connection('登录身份不匹配，未修改本实例的小号配置')
 
     def block_connection(self,reason):
-        if getattr(self,'_connection_blocked',False):return
-        self._connection_blocked=True
-        self.cfg.set('mobile_autostart',False)
+        with self._connection_state_lock:
+            if getattr(self,'_connection_blocked',False):return
+            self._connection_blocked=True
+            self.cfg.set('mobile_autostart',False)
         self._stop(self._brain_process)
         self._log_console(reason)
 
@@ -253,7 +302,8 @@ class MobileSupervisor(_BaseSupervisor):
     def action(self, cmd):
         aliases={'start_napcat':'napcat_start','stop_napcat':'napcat_stop','start_brain':'brain_start','stop_brain':'brain_stop','restart_brain':'brain_restart'}
         cmd=aliases.get(cmd,cmd)
-        if cmd in ('start_all','napcat_start','brain_start','brain_restart','napcat_restart','quick_login'):
+        if cmd=='quick_login':return self.quick_login()
+        if cmd in ('start_all','napcat_start','brain_start','brain_restart','napcat_restart'):
             self.cfg.set('mobile_autostart',True)
             self._connection_blocked=False
             self.user_stopped=False
