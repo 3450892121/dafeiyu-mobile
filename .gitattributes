@@ -8,3 +8,5 @@
 *.ps1 text eol=crlf
 *.py text eol=lf
 *.sh text eol=lf
+# Keep upstream notice bytes identical to the SHA256-pinned copies on every platform.
+runtime/licenses/*.txt -text

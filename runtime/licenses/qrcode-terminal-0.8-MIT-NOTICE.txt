@@ -1,0 +1,45 @@
+qrcode-terminal 0.8 — upstream attribution and MIT terms
+
+The official PyPI source distribution identifies its license as "MIT" in both
+setup.py and PKG-INFO. It supplies no separate LICENSE/COPYING file or copyright
+line. The original attribution in its Python file headers is retained here:
+
+    @author: ‘wang_pc‘
+    @time: 2017/2/10 16:38
+
+The time above is an upstream file timestamp, not an asserted copyright year.
+No missing copyright holder or copyright notice has been invented.
+
+Unmodified upstream source distribution:
+https://files.pythonhosted.org/packages/96/62/2422c088b7219db9f78c912418254db9896d1b20ab15e83aae2821419a65/qrcode-terminal-0.8.tar.gz
+SHA256: 1e2b69e662b9346e98dd95983033e9d43cff0643d8afda12605f515428e666c0
+
+The build computer packages that source as a universal pure-Python wheel using
+pip wheel --no-deps --no-build-isolation. Original source headers and metadata
+are preserved. The source distribution and build recipe are also supplied in
+the release's linux-sources.zip attachment.
+
+The following is the standard complete MIT permission and disclaimer text
+corresponding to the upstream MIT identifier, provided as a supplemental notice;
+it is not represented as a LICENSE file present in the original distribution.
+Standard text: https://opensource.org/license/mit
+
+The MIT License (MIT)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

@@ -8,8 +8,6 @@ import android.os.StatFs;
 import org.json.*;
 import java.io.*;
 import java.net.InetAddress;
-import java.net.URL;
-import javax.net.ssl.HttpsURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -20,14 +18,14 @@ import java.util.*;
 final class NativeRuntime {
     interface Progress { void update(String message); }
     final Context context;
-    final File engine, rootfs, payload, home, scratch;
+    final File engine, rootfs, payload, offline, home, scratch;
     final JSONObject layout;
     private volatile Process process;
 
     NativeRuntime(Context context) throws Exception {
         this.context=context.getApplicationContext();
         engine=new File(context.getFilesDir(),"engine"); rootfs=new File(engine,"rootfs");
-        payload=new File(engine,"payload"); home=new File(context.getFilesDir(),"instance");
+        payload=new File(engine,"payload"); offline=new File(engine,"offline"); home=new File(context.getFilesDir(),"instance");
         scratch=new File(context.getCacheDir(),"linux");
         layout=new JSONObject(assetText("runtime/layout.json"));
     }
@@ -39,35 +37,21 @@ final class NativeRuntime {
     void initialize(Progress progress) throws Exception {
         if(running())throw new IOException("请先停止运行再修复组件");
         if(!Arrays.asList(Build.SUPPORTED_ABIS).contains("arm64-v8a"))throw new IOException("当前安装包需要 64 位 ARM 安卓手机");
-        if(new StatFs(context.getFilesDir().getPath()).getAvailableBytes()<2500L*1024*1024 && !ready())
-            throw new IOException("首次初始化需要至少 2.5 GB 可用空间");
+        JSONObject bundled=offlineManifest();
+        long required=Math.max(4L*1024*1024*1024,offlineBytes(bundled)+3L*1024*1024*1024);
+        if(new StatFs(context.getFilesDir().getPath()).getAvailableBytes()<required && !ready())
+            throw new IOException("本机空间不足，首次准备需预留至少 "+((required+1024*1024-1)/(1024*1024))+" MB；内置组件还需要解压和安装空间");
         engine.mkdirs();new File(home,"data").mkdirs();new File(home,"backups").mkdirs();scratch.mkdirs();
         copyPayload();
+        prepareOffline(bundled,progress);
         if(!new File(rootfs,".base-ready").isFile()) {
             progress.update("正在校验内置运行环境……");
             JSONObject lock=new JSONObject(assetText("runtime/components.lock.json"));
-            String expected="",source="";JSONArray components=lock.getJSONArray("components");
-            for(int i=0;i<components.length();i++){JSONObject c=components.getJSONObject(i);if(c.optString("name").equals("ubuntu-base-arm64")){expected=c.getString("sha256");source=c.getString("source");}}
+            String expected="";JSONArray components=lock.getJSONArray("components");
+            for(int i=0;i<components.length();i++){JSONObject c=components.getJSONObject(i);if(c.optString("name").equals("ubuntu-base-arm64"))expected=c.getString("sha256");}
             if(expected.isEmpty())throw new IOException("缺少运行环境校验信息");
-            File archive=new File(scratch,"base-arm64.tar.gz");
-            boolean valid=false;
-            if(archive.isFile())try(InputStream input=new FileInputStream(archive)){valid=digest(input).equals(expected);}
-            if(!valid){
-                progress.update("正在从 Ubuntu 官方下载本机运行环境……");
-                if(!source.startsWith("https://cdimage.ubuntu.com/ubuntu-base/"))throw new IOException("运行环境来源无效");
-                HttpsURLConnection connection=(HttpsURLConnection)new URL(source).openConnection();
-                connection.setConnectTimeout(30000);connection.setReadTimeout(60000);connection.setInstanceFollowRedirects(false);
-                File partial=new File(scratch,"base-arm64.part");
-                try{
-                    if(connection.getResponseCode()!=200)throw new IOException("运行环境下载失败："+connection.getResponseCode());
-                    try(InputStream in=connection.getInputStream();OutputStream out=new FileOutputStream(partial)){
-                        byte[] b=new byte[65536];int n;long total=0;
-                        while((n=in.read(b))!=-1){if(Thread.currentThread().isInterrupted())throw new IOException("初始化已取消");total+=n;if(total>64L*1024*1024)throw new IOException("运行环境超过大小上限");out.write(b,0,n);}
-                    }
-                    try(InputStream in=new FileInputStream(partial)){if(!digest(in).equals(expected))throw new IOException("运行环境内容校验失败");}
-                    Files.move(partial.toPath(),archive.toPath(),StandardCopyOption.REPLACE_EXISTING);
-                }finally{connection.disconnect();Files.deleteIfExists(partial.toPath());}
-            }
+            File archive=new File(offline,"base/base-arm64.tar.gz");
+            try(InputStream input=new FileInputStream(archive)){if(!digest(input).equals(expected))throw new IOException("内置运行环境校验失败；请安装完整且未损坏的安装包");}
             File staging=new File(engine,"rootfs-staging");removeEngineTree(staging);staging.mkdirs();
             progress.update("正在解压手机私有运行环境……");
             try(InputStream input=new FileInputStream(archive)){SafeTar.extractGzip(input,staging);}
@@ -76,7 +60,7 @@ final class NativeRuntime {
             Files.move(staging.toPath(),rootfs.toPath(),StandardCopyOption.ATOMIC_MOVE);
         }
         prepareGuest();
-        progress.update("正在安装依赖与私有 QQ 组件；首次准备可能较久……");
+        progress.update("正在安装内置组件；仅 QQ 客户端需从腾讯官方下载……");
         Process installer=launch(Arrays.asList("/bin/bash","/opt/mobile/install-runtime.sh"),progress);
         int exit=installer.waitFor();
         synchronized(this){if(process==installer)process=null;}
@@ -87,7 +71,7 @@ final class NativeRuntime {
     synchronized void start(Progress progress) throws Exception {
         if(running())return;
         if(!ready())throw new IOException("请先完成运行环境初始化");
-        copyPayload();prepareGuest();
+        copyPayload();prepareOffline(offlineManifest(),progress);prepareGuest();
         launch(Arrays.asList("/home/mobile/tools/bin/python3","/opt/mobile/mobile_control.py"),progress);
     }
 
@@ -115,11 +99,11 @@ final class NativeRuntime {
         // PRoot's Android loader keeps its host path while guest paths are translated.
         bind(args,nativeDir.getPath(),nativeDir.getPath());bind(args,aliases.getPath(),aliases.getPath());
         bind(args,new File(scratch,"proot").getPath(),new File(scratch,"proot").getPath());
-        bind(args,home.getPath(),"/home/mobile");bind(args,payload.getPath(),"/opt/mobile");
+        bind(args,home.getPath(),"/home/mobile");bind(args,payload.getPath(),"/opt/mobile");bind(args,offline.getPath(),"/opt/offline");
         bind(args,new File(scratch,"tmp").getPath(),"/tmp");bind(args,new File(scratch,"shm").getPath(),"/dev/shm");
         Collections.addAll(args,"-w","/home/mobile","/usr/bin/env","-i","HOME=/home/mobile","USER=root","LOGNAME=root",
             "PATH=/home/mobile/tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","LANG=C.UTF-8","TZ=Asia/Shanghai",
-            "DAFEIYU_HOME=/home/mobile","PYTHONIOENCODING=utf-8","TMPDIR=/tmp");
+            "DAFEIYU_HOME=/home/mobile","DAFEIYU_OFFLINE=/opt/offline","PYTHONIOENCODING=utf-8","TMPDIR=/tmp");
         args.addAll(command);
         ProcessBuilder builder=new ProcessBuilder(args).directory(home).redirectErrorStream(true);
         Map<String,String> env=builder.environment();
@@ -166,7 +150,7 @@ final class NativeRuntime {
 
     private void prepareGuest()throws Exception {
         new File(scratch,"tmp").mkdirs();new File(scratch,"shm").mkdirs();new File(scratch,"proot").mkdirs();
-        for(String path:Arrays.asList("home/mobile","opt/mobile","dev/shm","tmp","proc","sys","system","apex"))new File(rootfs,path).mkdirs();
+        for(String path:Arrays.asList("home/mobile","opt/mobile","opt/offline","dev/shm","tmp","proc","sys","system","apex"))new File(rootfs,path).mkdirs();
         refreshDns();
         new SecretVault(home,engine).open();
         write(new File(rootfs,"etc/apt/apt.conf.d/99mobile"),"APT::Sandbox::User \"root\";\nAcquire::Retries \"2\";\n");
@@ -175,6 +159,61 @@ final class NativeRuntime {
             byte[] random=new byte[32];new SecureRandom().nextBytes(random);
             write(credentials,new JSONObject().put("token",Base64.getUrlEncoder().withoutPadding().encodeToString(random)).toString());
         }
+    }
+
+    private JSONObject offlineManifest()throws Exception {
+        final JSONObject manifest;
+        try{manifest=new JSONObject(assetText("runtime/offline/manifest.json"));}
+        catch(Exception error){throw new IOException("安装包缺少内置组件清单；请安装完整的内置组件版",error);}
+        if(manifest.optInt("schemaVersion")!=1||!manifest.optString("sha256").matches("[a-f0-9]{64}"))
+            throw new IOException("内置组件清单格式无效");
+        JSONArray files=manifest.getJSONArray("files");
+        if(files.length()<7||files.length()>10000)throw new IOException("内置组件清单数量无效");
+        Set<String> names=new HashSet<>();boolean deb=false,wheel=false;long total=0;
+        for(int i=0;i<files.length();i++){
+            JSONObject entry=files.getJSONObject(i);String relative=entry.getString("path");
+            SafeTar.member(offline.toPath(),relative);
+            if(relative.isEmpty()||relative.indexOf('\n')>=0||relative.indexOf('\r')>=0||relative.matches("(?:.*?/)?\\.\\.?(?:/.*)?")||!names.add(relative))
+                throw new IOException("内置组件路径无效或重复");
+            long size=entry.getLong("size");
+            if(size<=0||size>1024L*1024*1024||!entry.getString("sha256").matches("[a-f0-9]{64}"))throw new IOException("内置组件摘要或大小无效");
+            total+=size;if(total>3L*1024*1024*1024)throw new IOException("内置组件总体积超限");
+            deb|=relative.startsWith("apt/pool/")&&relative.endsWith(".deb");wheel|=relative.startsWith("wheels/")&&relative.endsWith(".whl");
+        }
+        if(!names.containsAll(Arrays.asList("base/base-arm64.tar.gz","archives/napcat.zip","models/sensevoice.tar.bz2","apt/sources.list"))||!deb||!wheel)
+            throw new IOException("安装包缺少必须的内置运行组件");
+        for(String suite:Arrays.asList("noble","noble-updates","noble-security"))if(!names.contains("apt/dists/"+suite+"/InRelease"))throw new IOException("安装包缺少 Ubuntu 官方签名索引");
+        if(manifest.has("totalBytes")&&manifest.getLong("totalBytes")!=total)throw new IOException("内置组件总体积记录不符");
+        return manifest;
+    }
+
+    private static long offlineBytes(JSONObject manifest)throws Exception {
+        long total=0;JSONArray files=manifest.getJSONArray("files");for(int i=0;i<files.length();i++)total+=files.getJSONObject(i).getLong("size");return total;
+    }
+
+    private void prepareOffline(JSONObject manifest,Progress progress)throws Exception {
+        String version=manifest.getString("sha256");File marker=new File(offline,".offline-version");JSONArray files=manifest.getJSONArray("files");
+        boolean unchanged=marker.isFile()&&new String(Files.readAllBytes(marker.toPath()),StandardCharsets.UTF_8).equals(version);
+        if(unchanged){
+            for(int i=0;i<files.length();i++){JSONObject entry=files.getJSONObject(i);File file=new File(offline,entry.getString("path"));if(!file.isFile()||Files.isSymbolicLink(file.toPath())||file.length()!=entry.getLong("size")){unchanged=false;break;}}
+            if(unchanged&&new File(offline,".deb-files.list").isFile()&&new File(offline,"manifest.json").isFile())return;
+        }
+        if(new StatFs(context.getFilesDir().getPath()).getAvailableBytes()<offlineBytes(manifest)+64L*1024*1024)throw new IOException("空间不足，无法展开安装包内置组件");
+        File staging=new File(engine,"offline-staging");removeEngineTree(staging);staging.mkdirs();StringBuilder debs=new StringBuilder();
+        for(int i=0;i<files.length();i++){
+            if(Thread.currentThread().isInterrupted())throw new InterruptedIOException("初始化已取消");
+            JSONObject entry=files.getJSONObject(i);String relative=entry.getString("path");File target=SafeTar.member(staging.toPath(),relative).toFile();target.getParentFile().mkdirs();
+            progress.update("正在校验内置运行组件 "+(i+1)+" / "+files.length()+"……");
+            MessageDigest hash=MessageDigest.getInstance("SHA-256");long total=0,expected=entry.getLong("size");
+            try(InputStream input=context.getAssets().open("runtime/offline/"+relative);OutputStream out=new FileOutputStream(target)){
+                byte[] b=new byte[65536];int n;while((n=input.read(b))!=-1){if(Thread.currentThread().isInterrupted())throw new InterruptedIOException("初始化已取消");total+=n;if(total>expected)throw new IOException("内置组件大小不符："+relative);out.write(b,0,n);hash.update(b,0,n);}
+            }
+            if(total!=expected||!hex(hash.digest()).equals(entry.getString("sha256")))throw new IOException("内置组件校验失败："+relative);
+            if(relative.startsWith("apt/pool/")&&relative.endsWith(".deb"))debs.append(relative).append('\n');
+        }
+        write(new File(staging,"manifest.json"),assetText("runtime/offline/manifest.json"));
+        write(new File(staging,".deb-files.list"),debs.toString());write(new File(staging,".offline-version"),version);
+        removeEngineTree(offline);Files.move(staging.toPath(),offline.toPath(),StandardCopyOption.ATOMIC_MOVE);
     }
 
     private void copyPayload()throws Exception {

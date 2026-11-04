@@ -57,7 +57,7 @@ public final class MainActivity extends Activity {
         stateText=ui.text(EngineService.alive()?EngineService.message():"本机服务尚未启动",R.dimen.body_text,R.color.ink,false);ui.add(state,stateText,R.dimen.space_small);
         ui.add(state,ui.button("初始化 / 修复运行组件",()->{
             if(EngineService.busy()){toast("运行任务正在进行，请等待当前步骤完成");return;}
-            new AlertDialog.Builder(this).setTitle("准备本机运行环境").setMessage("首次准备需要联网下载约 1–2 GB 组件，并预留至少 2.5 GB 空间。所有组件只安装在本软件内部。建议连接 Wi-Fi 和电源。")
+            new AlertDialog.Builder(this).setTitle("准备本机运行环境").setMessage("本包已内置 Ubuntu、Python 依赖、NapCat 和 CPU 识别模型，准备这些组件无需访问 GitHub、Ubuntu 或 PyPI。QQ 客户端因无公开再分发授权，首次仍从腾讯官方 HTTPS 地址下载约 200 MB。请至少预留 4 GB 空间并连接电源。所有组件仅安装在本软件内部；AI 接口和 QQ 本人登录仍需联网。")
                 .setNegativeButton("返回",null).setPositiveButton("开始准备",(d,w)->service(EngineService.INITIALIZE)).show();
         }),R.dimen.space_small);
         ui.add(state,ui.button("启动机器人",()->service(EngineService.RUN)),R.dimen.space_small);
@@ -85,7 +85,7 @@ public final class MainActivity extends Activity {
         detail(card,"可用内存 "+Formatter.formatFileSize(this,info.availMem)+" / "+Formatter.formatFileSize(this,info.totalMem));
         detail(card,"应用存储可用 "+Formatter.formatFileSize(this,new StatFs(getFilesDir().getPath()).getAvailableBytes()));
         detail(card,((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).areNotificationsEnabled()?"运行通知已允许":"运行通知未允许，可在通知设置中开启");
-        detail(card,"建议 64 位 ARM、至少 6 GB 内存及 4 GB 空闲存储；具体以设备实测为准。");
+        detail(card,"建议 64 位 ARM、至少 6 GB 内存及 6 GB 空闲存储；初始化仍以实时空间检查及设备实测为准。");
         ui.add(card,ui.button("后台与电池设置",()->{
             try{startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));}catch(Exception e){startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName())));}
         }),R.dimen.space_small);

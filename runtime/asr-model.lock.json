@@ -4,6 +4,6 @@
   "sha256": "7d1efa2138a65b0b488df37f8b89e3d91a60676e416f515b952358d83dfd347e",
   "size": 163002883,
   "directory": "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17",
-  "license": "Apache-2.0; see upstream SenseVoice and sherpa-onnx notices",
+  "license": "FunASR Model Open Source License Agreement v1.1 (model weights); Apache-2.0 (sherpa-onnx code)",
   "provenance": "https://api.github.com/repos/k2-fsa/sherpa-onnx/releases/assets/288366523"
 }

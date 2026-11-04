@@ -17,6 +17,7 @@ import wave
 from mobile_policy import RUNTIME, initialize, config_for_mobile
 
 _INSTALL=threading.Lock()
+OFFLINE=Path(os.environ.get('DAFEIYU_OFFLINE') or '/opt/offline')
 
 
 def install_model(home=None):
@@ -26,22 +27,12 @@ def install_model(home=None):
     with _INSTALL:
         if (destination/'model.int8.onnx').is_file() and (destination/'tokens.txt').is_file():return destination
         root.mkdir(parents=True,exist_ok=True)
-        archive=root/'sensevoice.tar.bz2';partial=root/'sensevoice.part'
-        valid=False
-        if archive.is_file():
-            with archive.open('rb')as f:valid=hashlib.file_digest(f,'sha256').hexdigest()==lock['sha256']
-        if not valid:
-            total=0;digest=hashlib.sha256()
-            with urllib.request.urlopen(lock['url'],timeout=60)as response,partial.open('wb')as out:
-                if not response.geturl().startswith('https://'):raise ValueError('模型下载不能降级为 HTTP')
-                while True:
-                    data=response.read(256*1024)
-                    if not data:break
-                    total+=len(data)
-                    if total>180*1024*1024:raise ValueError('模型大小超限')
-                    digest.update(data);out.write(data)
-            if digest.hexdigest()!=lock['sha256']:partial.unlink(missing_ok=True);raise ValueError('语音模型校验失败')
-            os.replace(partial,archive)
+        archive=OFFLINE/'models/sensevoice.tar.bz2'
+        if not archive.is_file() or archive.is_symlink() or archive.stat().st_size!=int(lock['size']):
+            raise ValueError('内置 CPU 模型归档缺失或大小不符；请安装完整安装包，不会从 GitHub 下载')
+        with archive.open('rb')as stream:
+            if hashlib.file_digest(stream,'sha256').hexdigest()!=lock['sha256']:
+                raise ValueError('内置 CPU 模型校验失败；请重新安装完整安装包')
         with tempfile.TemporaryDirectory(dir=root)as temp:
             stage=Path(temp)
             with tarfile.open(archive,'r:bz2')as package:
@@ -63,7 +54,7 @@ def recognize_local(wav,home):
     import numpy as np
     import sherpa_onnx
     model=Path(home)/'asr'/json.loads((RUNTIME/'asr-model.lock.json').read_text())['directory']
-    if not(model/'model.int8.onnx').is_file():return {'text':'','segments':[],'error':'请在手机设置页下载 CPU 语音识别模型'}
+    if not(model/'model.int8.onnx').is_file():return {'text':'','segments':[],'error':'请在手机设置页准备或修复内置 CPU 语音识别模型，无需下载'}
     with wave.open(str(wav),'rb')as audio:
         if audio.getsampwidth()!=2 or audio.getnchannels()!=1 or audio.getframerate()!=16000:raise ValueError('识别音轨必须是 16kHz 单声道 PCM')
         length=audio.getnframes()/16000

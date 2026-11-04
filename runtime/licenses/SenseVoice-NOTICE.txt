@@ -1,0 +1,40 @@
+SenseVoiceSmall int8 ONNX model attribution and license notice
+
+Original model: SenseVoiceSmall
+Original model authors/provider: FunAudioLLM / Alibaba Group
+Model card: https://huggingface.co/FunAudioLLM/SenseVoiceSmall
+Model-card license: other / model-license
+Model-card license link: https://github.com/modelscope/FunASR/blob/main/MODEL_LICENSE
+
+ONNX conversion/distribution: k2-fsa / csukuangfj
+Conversion repository:
+https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
+The conversion repository identifies the original SenseVoice model as its source.
+
+Bundled upstream archive:
+sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2
+https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2
+The exact artifact digest and size are recorded in runtime/asr-model.lock.json.
+The archive and its original notices are retained; this project does not train,
+finetune, rename or quantize the bundled weights again.
+
+The model weights have their own license. The original model card refers to the
+FunASR Model Open Source License Agreement, Version 1.1. A complete copy is supplied
+in SenseVoice-FunASR-MODEL-LICENSE-v1.1.txt, including its attribution, model-name,
+conduct, termination and revision terms. The source/authorship and model names must
+remain with redistributed weights. This notice does not replace or expand those
+terms, and does not label the weights as Apache-2.0 or MIT.
+
+Model-license text retrieved from the official modelscope/FunASR repository on
+2026-11-04. The retained text has:
+SHA256: 7dba975a2069691db4992b0592d70828b330d2f8a30a71450f4e152a554e84f8
+Git blob: d5cc52aad23a88da10b8cffbd9b56d43ac7398fa
+Immutable content API:
+https://api.github.com/repos/modelscope/FunASR/git/blobs/d5cc52aad23a88da10b8cffbd9b56d43ac7398fa
+
+sherpa-onnx recognition-engine code is separately licensed under Apache-2.0.
+Its code license does not grant rights to the SenseVoiceSmall model weights.
+See sherpa-onnx-Apache-2.0.txt and the original notices in the upstream wheels.
+
+No endorsement by the original model authors, model converter or Alibaba Group is
+implied by inclusion in this application. All original copyrights are retained.

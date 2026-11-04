@@ -5,20 +5,34 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import urllib.parse
 import urllib.request
 import zipfile
 
 BASE=Path('/home/mobile')
 RUNTIME=Path(__file__).resolve().parent
+OFFLINE=Path(os.environ.get('DAFEIYU_OFFLINE') or '/opt/offline')
+
+def verified(path,component):
+    if not path.is_file() or path.is_symlink():return False
+    if path.stat().st_size!=int(component['size']):return False
+    with path.open('rb')as stream:return hashlib.file_digest(stream,'sha256').hexdigest()==component['sha256']
+
 
 def fetch(component):
-    target=BASE/'downloads'/component['file']
-    def valid():
-        if not target.is_file(): return False
-        with target.open('rb') as f:
-            digest=hashlib.file_digest(f,'sha256').hexdigest()
-        return digest==component['sha256']
-    if valid(): return target
+    if component.get('file')=='napcat-shell.zip':
+        bundled=OFFLINE/'archives/napcat.zip'
+        if not verified(bundled,component):
+            raise ValueError('内置 NapCat 归档缺失或校验失败；请安装完整安装包，不会从 GitHub 补下')
+        return bundled
+    if component.get('file')!='qq-arm64.deb':raise ValueError('不支持的客户端组件')
+    origin=urllib.parse.urlsplit(str(component.get('url')or''))
+    if (origin.scheme!='https' or origin.hostname!='qqdl.gtimg.cn' or origin.port not in(None,443)
+            or origin.username is not None or origin.password is not None or origin.query or origin.fragment):
+        raise ValueError('QQ 客户端只允许固定的腾讯官方 HTTPS 下载源')
+    target=BASE/'downloads'/'qq-arm64.deb'
+    if verified(target,component):return target
+    target.parent.mkdir(parents=True,exist_ok=True)
     temporary=target.with_name(target.name+'.part')
     request=urllib.request.Request(component['url'],headers={'User-Agent':'DafeiyuMobile/1'})
     digest=hashlib.sha256();total=0
@@ -28,9 +42,9 @@ def fetch(component):
             chunk=response.read(256*1024)
             if not chunk: break
             total+=len(chunk)
-            if total>400*1024*1024: raise ValueError('组件超过大小上限')
+            if total>min(400*1024*1024,int(component['size'])): raise ValueError('QQ 客户端超过固定大小上限')
             output.write(chunk);digest.update(chunk)
-    if digest.hexdigest()!=component['sha256']:
+    if total!=int(component['size']) or digest.hexdigest()!=component['sha256']:
         temporary.unlink(missing_ok=True)
         raise ValueError('组件内容校验失败，未执行安装')
     temporary.replace(target)

@@ -1,0 +1,404 @@
+{
+  "schemaVersion": 1,
+  "description": "Corresponding source and build inputs for copyleft libraries/packages in the exact bundled wheels; appended to the public Linux source ZIP.",
+  "files": [
+    {
+      "path": "archives/alsa-lib-1.2.12.tar.gz",
+      "url": "https://github.com/alsa-project/alsa-lib/archive/refs/tags/v1.2.12.tar.gz",
+      "size": 860668,
+      "sha256": "f067dbba9376e5bbbb417b77751d2a9f2f277c54fb3a2b5c023cc2c7dfb4e3c1"
+    },
+    {
+      "path": "archives/autocommand-2.2.2.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/5b/18/774bddb96bc0dc0a2b8ac2d2a0e686639744378883da0fc3b96a54192d7a/autocommand-2.2.2.tar.gz",
+      "size": 22894,
+      "sha256": "878de9423c5596491167225c2a455043c3130fb5b7286ac83443d45e74955f34",
+      "metadataSource": "https://pypi.org/pypi/autocommand/2.2.2/json"
+    },
+    {
+      "path": "archives/bilibili_api_python-17.4.2.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/2e/09/d091a888423185038b232555868c4bd82cf351677b24ec633f287acca0d3/bilibili_api_python-17.4.2.tar.gz",
+      "size": 1422431,
+      "sha256": "3ec62eaa45702779957eaf70fba0c5ff7c858054804cb605780f76fee388ebd5",
+      "metadataSource": "https://pypi.org/pypi/bilibili-api-python/17.4.2/json"
+    },
+    {
+      "path": "archives/certifi-2026.10.23.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/fd/11/b524cbd9bbdaca58608e4cf4053fd463417549e1959fa8d3aa18319f9555/certifi-2026.10.23.tar.gz",
+      "size": 136225,
+      "sha256": "a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd",
+      "metadataSource": "https://pypi.org/pypi/certifi/2026.10.23/json"
+    },
+    {
+      "path": "archives/eigen-1d8b82b0740839c0de7f1242a3585e3390ff5f33.zip",
+      "url": "https://github.com/eigen-mirror/eigen/archive/1d8b82b0740839c0de7f1242a3585e3390ff5f33/eigen-1d8b82b0740839c0de7f1242a3585e3390ff5f33.zip",
+      "size": 4075744,
+      "sha256": "6a60d76351f97132669daeeb721d6bf14b008101883ad2d687a3201c5c461eb0",
+      "upstreamSha1": "05b19b49e6fbb91246be711d801160528c135e34"
+    },
+    {
+      "path": "archives/gcc-8.5.0-28.el8_10.alma.1.src.rpm",
+      "url": "https://repo.almalinux.org/vault/8.10/BaseOS/Source/Packages/gcc-8.5.0-28.el8_10.alma.1.src.rpm",
+      "size": 65715094,
+      "sha256": "c94dbbd2cd6d5d01a5a6822ea18f8ce34942c25a80e17b4682d547d5e652dbd0",
+      "checksumProvenance": "https://repo.almalinux.org/vault/8.10/BaseOS/Source/repodata/5d7ae056db3707e0e229b07dc9959f73982251e74077387bf8b01feebcdc8696-primary.xml.gz"
+    },
+    {
+      "path": "archives/libiconv-1.18.tar.gz",
+      "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.18.tar.gz",
+      "size": 5822590,
+      "sha256": "3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8"
+    },
+    {
+      "path": "archives/libxml2-2.14.6.tar.xz",
+      "url": "https://download.gnome.org/sources/libxml2/2.14/libxml2-2.14.6.tar.xz",
+      "size": 2327580,
+      "sha256": "7ce458a0affeb83f0b55f1f4f9e0e55735dbfc1a9de124ee86fb4a66b597203a"
+    },
+    {
+      "path": "archives/libxslt-1.1.43.tar.xz",
+      "url": "https://download.gnome.org/sources/libxslt/1.1/libxslt-1.1.43.tar.xz",
+      "size": 1518364,
+      "sha256": "5a3d6b383ca5afc235b171118e90f5ff6aa27e9fea3303065231a6d403f0183a"
+    },
+    {
+      "path": "archives/lxml-6.1.3.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/23/ad/28ecd7cb894d172f3c9c80a075eeeb2017ac62e3632cee05a5f9493547eb/lxml-6.1.3.tar.gz",
+      "size": 4211198,
+      "sha256": "45222d94ddd511536f3b2f7d9deae3b2339b4ce0f075f1ca25703b07cad9dd21",
+      "metadataSource": "https://pypi.org/pypi/lxml/6.1.3/json"
+    },
+    {
+      "path": "archives/setuptools-84.2.1.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/70/b3/c19426f783614d625699a4b247faf628ea9ab1db228674491767b417f9e1/setuptools-84.2.1.tar.gz",
+      "size": 1230289,
+      "sha256": "3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc",
+      "metadataSource": "https://pypi.org/pypi/setuptools/84.2.1/json"
+    },
+    {
+      "path": "archives/zlib-1.3.2.tar.gz",
+      "url": "https://zlib.net/fossils/zlib-1.3.2.tar.gz",
+      "size": 1502830,
+      "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16"
+    },
+    {
+      "path": "recipes/lxml-6.1.3-wheels.yml",
+      "url": "https://raw.githubusercontent.com/lxml/lxml/lxml-6.1.3/.github/workflows/wheels.yml",
+      "size": 8988,
+      "sha256": "16e5ba2ae3588552205f47bc1f52a5c2e7c0805c9066faa79bdb3cd2f139c302"
+    },
+    {
+      "path": "recipes/onnxruntime-1.28.2-deps.txt",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/cmake/deps.txt",
+      "size": 7279,
+      "sha256": "894bd3f342b9fa570301f1a62830751e50657ec98a22b210d176b7dbb354ccc2"
+    },
+    {
+      "path": "recipes/onnxruntime-1.28.2-eigen-s390x-build-werror.patch",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/cmake/patches/eigen/s390x-build-werror.patch",
+      "size": 610,
+      "sha256": "a1a7b0ca8382cb00542587b6bc725f59abd59ad5bb491825f7876ad6e344ef0b"
+    },
+    {
+      "path": "recipes/onnxruntime-1.28.2-eigen-s390x-build.patch",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/cmake/patches/eigen/s390x-build.patch",
+      "size": 17794,
+      "sha256": "6d41f4504f665bc591336c668a1aa16ffc5e0f02fe9c2f9c46c6f5660b54c849"
+    },
+    {
+      "path": "recipes/onnxruntime-1.28.2-eigen.cmake",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.28.2/cmake/external/eigen.cmake",
+      "size": 788,
+      "sha256": "9db439c44f215186d3e8bde7970affd03d8fa911d89cac19adc30ed681ff32a2"
+    },
+    {
+      "path": "recipes/openblas-libs-78fc0eaf-posix.yml",
+      "url": "https://raw.githubusercontent.com/MacPython/openblas-libs/78fc0eaf6de71d92fd98f74f7e5bfa356a2f83e3/.github/workflows/posix.yml",
+      "size": 5228,
+      "sha256": "1c56b1d261d5f40373895b6619325f4bf19e0e31404066fc59c57632c62795fc"
+    },
+    {
+      "path": "recipes/sherpa-onnx-v2.0.1-build-wheels-aarch64.yaml",
+      "url": "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/v2.0.1/.github/workflows/build-wheels-aarch64.yaml",
+      "size": 14774,
+      "sha256": "4129c055591d8c4179e8c986f71870e7db807c3100db5f5afde6bcc9e8b5952f"
+    }
+  ],
+  "components": [
+    {
+      "name": "alsa-lib",
+      "version": "1.2.12",
+      "license": "LGPL-2.1-or-later",
+      "wheel": "sherpa_onnx-2.0.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+      "wheelSha256": "929f926f9ae1b44263392b4bcfee3fa1e4c7643ee460d93c860e2113260722e9",
+      "members": [
+        {
+          "path": "sherpa_onnx.libs/libasound-eeac1cd9.so.2.0.0",
+          "size": 5763049,
+          "sha256": "719d17f13b24f7efb4a8ad20e21705ed6da001b57a872d18c53eac430316e9e0"
+        }
+      ],
+      "sourceFiles": [
+        "archives/alsa-lib-1.2.12.tar.gz",
+        "recipes/sherpa-onnx-v2.0.1-build-wheels-aarch64.yaml"
+      ],
+      "linkage": "dynamic",
+      "evidence": "Fixed sherpa v2.0.1 ARM64 workflow clones ALSA v1.2.12 and runs gitcompile; bundled library version string is 1.2.12."
+    },
+    {
+      "name": "libiconv in lxml",
+      "version": "1.18 / lxml 6.1.3",
+      "license": "LGPL-2.1-or-later (libiconv); lxml BSD-3-Clause",
+      "wheel": "lxml-6.1.3-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl",
+      "wheelSha256": "b37772102d44bb6628186accca3a121b1fa3a6b3d97518a8c29a5229ca4c0d0a",
+      "members": [
+        {
+          "path": "lxml/_elementpath.cpython-312-aarch64-linux-gnu.so",
+          "size": 340392,
+          "sha256": "809a39b1ed9f47b8b772f72167837303d13d8b5b2742254a8019073a7fe760b3"
+        },
+        {
+          "path": "lxml/builder.cpython-312-aarch64-linux-gnu.so",
+          "size": 268496,
+          "sha256": "91c647c2f400a2a5c9e8e2a4eacbaa372d1de7f167eb9104a9de496de10f9d51"
+        },
+        {
+          "path": "lxml/etree.cpython-312-aarch64-linux-gnu.so",
+          "size": 5165920,
+          "sha256": "804288a24ef0ac7c1025e6fe9b98f30636456800660db482de392612bbb0a046"
+        },
+        {
+          "path": "lxml/objectify.cpython-312-aarch64-linux-gnu.so",
+          "size": 2908880,
+          "sha256": "7a57c546869d271391f635c8e9b666bd8e4e0854f2f2351da34c28761c02d540"
+        },
+        {
+          "path": "lxml/sax.cpython-312-aarch64-linux-gnu.so",
+          "size": 268544,
+          "sha256": "9a351dbef2eb8687ab4391f578c2c6bc20dd398a5ed4bac9004ebb2c9d69bfd8"
+        },
+        {
+          "path": "lxml/html/_difflib.cpython-312-aarch64-linux-gnu.so",
+          "size": 608448,
+          "sha256": "7d50eb4bafc283831e2f049d7de4a154530fa29f70621676469237cec543eb2d"
+        },
+        {
+          "path": "lxml/html/diff.cpython-312-aarch64-linux-gnu.so",
+          "size": 402840,
+          "sha256": "751b106a785d22706841680a95396bdc945697864bc06e6a76cf043680614d4d"
+        }
+      ],
+      "sourceFiles": [
+        "archives/libiconv-1.18.tar.gz",
+        "archives/lxml-6.1.3.tar.gz",
+        "archives/libxml2-2.14.6.tar.xz",
+        "archives/libxslt-1.1.43.tar.xz",
+        "archives/zlib-1.3.2.tar.gz",
+        "recipes/lxml-6.1.3-wheels.yml"
+      ],
+      "linkage": "static",
+      "evidence": "Defined libiconv_open and _libiconv_version=0x0112 in the extension; fixed lxml workflow/build metadata fixes all four dependency versions. Complete lxml source is supplied for rebuilding and relinking."
+    },
+    {
+      "name": "GCC libgfortran",
+      "version": "8.5.0-28.el8_10.alma.1",
+      "license": "GPL-3.0-or-later WITH GCC-exception-3.1",
+      "wheel": "numpy-2.5.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+      "wheelSha256": "fe4d21ab149f15e4e6043dfb0de87e6e5f34ac176cde83060e9802981fca2ac2",
+      "members": [
+        {
+          "path": "numpy.libs/libgfortran-e1b7dfc8-d8198c01.so.5.0.0",
+          "size": 1605377,
+          "sha256": "25899a29a06d3f2927021b4823d858558839fea0e7e759eedb8926fd0a339ea4"
+        }
+      ],
+      "sourceFiles": [
+        "archives/gcc-8.5.0-28.el8_10.alma.1.src.rpm",
+        "recipes/openblas-libs-78fc0eaf-posix.yml"
+      ],
+      "linkage": "dynamic",
+      "binaryProvenance": {
+        "url": "https://repo.almalinux.org/almalinux/8/BaseOS/aarch64/os/Packages/libgfortran-8.5.0-28.el8_10.alma.1.aarch64.rpm",
+        "sourceRpm": "gcc-8.5.0-28.el8_10.alma.1.src.rpm",
+        "gnuBuildId": "fec6afedbbd93349f73ee8665a2d188514824a18",
+        ".textSha256": "bf484e2ef56d510f0c01a4824d15a654bcb709dafd6a391cfbec8d24c207e753",
+        ".rodataSha256": "8dfc835cf000529fcc82bd29629cd53703e2b4f78d22c071fac2555b5c505ec8"
+      }
+    },
+    {
+      "name": "bilibili-api-python",
+      "version": "17.4.2",
+      "license": "GPL-3.0-or-later",
+      "wheel": "bilibili_api_python-17.4.2-py3-none-any.whl",
+      "wheelSha256": "91e002b2e0bcd3eb50239e35ceb849133b574f407a92a06636e1de1031b6d09d",
+      "members": [
+        {
+          "path": "bilibili_api/__init__.py",
+          "size": 5374,
+          "sha256": "7d14b3f742ef619951bd1a614a5ea5a7d1e90a03d01118bac3c4f4828bd18485"
+        }
+      ],
+      "sourceFiles": [
+        "archives/bilibili_api_python-17.4.2.tar.gz"
+      ],
+      "linkage": "Python source retained in original wheel"
+    },
+    {
+      "name": "autocommand vendored by setuptools",
+      "version": "2.2.2 / setuptools 84.2.1",
+      "license": "LGPL-3.0 (see retained upstream text)",
+      "wheel": "setuptools-84.2.1-py3-none-any.whl",
+      "wheelSha256": "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2",
+      "members": [
+        {
+          "path": "setuptools/_vendor/autocommand/__init__.py",
+          "size": 1037,
+          "sha256": "ce4a39467be896f6fe5178c2c7fd80acf4c6056c142b9418e0b21020a611ec0b"
+        },
+        {
+          "path": "setuptools/_vendor/autocommand/autoasync.py",
+          "size": 5680,
+          "sha256": "00c772af1352e29a9625f3ffc6ea0e70898e1d60fea93ef1d3ac2628dd55a7e5"
+        },
+        {
+          "path": "setuptools/_vendor/autocommand/autocommand.py",
+          "size": 2505,
+          "sha256": "866904990ef61ed2f9e609d44558c33a7b1f62519de652d76ef4f8286e3de90c"
+        },
+        {
+          "path": "setuptools/_vendor/autocommand/automain.py",
+          "size": 2076,
+          "sha256": "0366fc8bbe7833173f0e353d585afabea6035a5873d1c9fc9a2bbc77c12cc55f"
+        },
+        {
+          "path": "setuptools/_vendor/autocommand/autoparse.py",
+          "size": 11642,
+          "sha256": "5955a66493dc6f350a5cfe34ada430ff41c3f2a3c9d95f551b57851669a7171c"
+        },
+        {
+          "path": "setuptools/_vendor/autocommand/errors.py",
+          "size": 886,
+          "sha256": "eda6b7ae887d1deaddea720aa501cd584b25584f28abb1a21d8554b91a8e4670"
+        }
+      ],
+      "sourceFiles": [
+        "archives/setuptools-84.2.1.tar.gz",
+        "archives/autocommand-2.2.2.tar.gz"
+      ],
+      "linkage": "Python source retained in original wheel"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.10.23",
+      "license": "MPL-2.0",
+      "wheel": "certifi-2026.10.23-py3-none-any.whl",
+      "wheelSha256": "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1",
+      "members": [
+        {
+          "path": "certifi/cacert.pem",
+          "size": 235863,
+          "sha256": "2ef52ad56b4803e264045c915e55c236cbfa045b84b81efefc218a19eb44bd2b"
+        },
+        {
+          "path": "certifi/core.py",
+          "size": 3394,
+          "sha256": "5c55f2727746e697f7edac9e17c377d8752e0da7ecca191531b3b80403d61dad"
+        }
+      ],
+      "sourceFiles": [
+        "archives/certifi-2026.10.23.tar.gz"
+      ],
+      "linkage": "Python source and certificate data retained in original wheel"
+    },
+    {
+      "name": "Eigen compiled into ONNX Runtime",
+      "version": "1d8b82b0740839c0de7f1242a3585e3390ff5f33",
+      "license": "MPL-2.0",
+      "wheel": "sherpa_onnx_core-2.0.1-py3-none-manylinux2014_aarch64.whl",
+      "wheelSha256": "4a855a5c89c89885111e4e9c570e5da1aed63373c031b757d8046792d95fe8fe",
+      "members": [
+        {
+          "path": "sherpa_onnx/lib/libonnxruntime.so",
+          "size": 34606912,
+          "sha256": "cfc800d4438f15e8d9017521326776ca7117d8783cb847ccccc2fc61ac4d540f"
+        }
+      ],
+      "sourceFiles": [
+        "archives/eigen-1d8b82b0740839c0de7f1242a3585e3390ff5f33.zip",
+        "recipes/onnxruntime-1.28.2-eigen-s390x-build.patch",
+        "recipes/onnxruntime-1.28.2-eigen-s390x-build-werror.patch",
+        "recipes/onnxruntime-1.28.2-eigen.cmake",
+        "recipes/onnxruntime-1.28.2-deps.txt"
+      ],
+      "linkage": "compiled template code in ONNX Runtime",
+      "evidence": "Actual ELF contains defined nonzero-size Eigen code symbols. Fixed ONNX Runtime 1.28.2 eigen.cmake fetches this exact archive and applies both included patches; archive SHA1 matches deps.txt."
+    }
+  ],
+  "noticeFiles": [
+    "alsa-lib-1.2.12-LGPL-2.1.txt",
+    "libiconv-1.18-LGPL-2.1.txt",
+    "GCC-runtime-exception-3.1.txt",
+    "GPL-3.0.txt",
+    "wheel-native-NOTICE.txt",
+    "onnxruntime-1.28.2-LICENSE.txt",
+    "onnxruntime-1.28.2-ThirdPartyNotices.txt",
+    "Eigen-MPL-2.0.txt"
+  ],
+  "noticeDigests": [
+    {
+      "path": "alsa-lib-1.2.12-LGPL-2.1.txt",
+      "size": 26440,
+      "sha256": "32434afcc8666ba060e111d715bfdb6c2d5dd8a35fa4d3ab8ad67d8f850d2f2b"
+    },
+    {
+      "path": "libiconv-1.18-LGPL-2.1.txt",
+      "size": 26419,
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95"
+    },
+    {
+      "path": "GCC-runtime-exception-3.1.txt",
+      "size": 3324,
+      "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+    },
+    {
+      "path": "GPL-3.0.txt",
+      "size": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "path": "wheel-native-NOTICE.txt",
+      "size": 4859,
+      "sha256": "ee1dc4eff28409c7223be764bd562f9ce5cecf82982e2ab056071cf849be36f7"
+    },
+    {
+      "path": "onnxruntime-1.28.2-LICENSE.txt",
+      "size": 1073,
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "path": "onnxruntime-1.28.2-ThirdPartyNotices.txt",
+      "size": 325054,
+      "sha256": "0e07b95f3a8d6230037707c5c4a2b554d12c4cb67369669ac255635528ffcee2"
+    },
+    {
+      "path": "Eigen-MPL-2.0.txt",
+      "size": 16727,
+      "sha256": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172"
+    }
+  ],
+  "onnxruntimeNoticeProvenance": {
+    "version": "1.28.2",
+    "gitCommit": "33ca9628233dc8f002435e868d4c2e9f82766ca1",
+    "archive": "https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.28.2/onnxruntime-linux-aarch64-glibc2_17-Release-1.28.2.zip",
+    "api": "https://api.github.com/repos/csukuangfj/onnxruntime-libs/releases/assets/548005482",
+    "size": 11658719,
+    "sha256": "28083273643f40fa6477ef9d53986fe216304710c4b1c743b217a4effd016339",
+    "licenseFiles": [
+      "onnxruntime-1.28.2-LICENSE.txt",
+      "onnxruntime-1.28.2-ThirdPartyNotices.txt"
+    ],
+    "identicalWheelMemberSha256": "cfc800d4438f15e8d9017521326776ca7117d8783cb847ccccc2fc61ac4d540f",
+    "actualMplSourceComponent": "Eigen compiled into ONNX Runtime",
+    "optionalComponentsNotInferred": true
+  }
+}

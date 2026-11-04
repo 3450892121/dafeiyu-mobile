@@ -25,7 +25,7 @@ class Control:
         self.cfg=config_for_mobile()
         self.panel=None
         self.lock=threading.RLock()
-        self.asr_job={'running':False,'message':'尚未下载 CPU 识别模型'}
+        self.asr_job={'running':False,'message':'内置 CPU 识别模型可在本机准备或修复'}
         credentials=json.loads((self.home/'data/app-control.json').read_text(encoding='utf-8'))
         self.token=credentials['token']
         if not isinstance(self.token,str) or len(self.token)<32: raise ValueError('本机控制令牌无效')
@@ -210,22 +210,24 @@ class Control:
 
     def asr_status(self):
         lock=json.loads((RUNTIME/'asr-model.lock.json').read_text(encoding='utf-8'))
-        ready=(self.home/'asr'/lock['directory']/'model.int8.onnx').is_file()
+        model=self.home/'asr'/lock['directory']
+        ready=(model/'model.int8.onnx').is_file() and (model/'tokens.txt').is_file()
         return {'ok':True,'local_ready':ready,'job':dict(self.asr_job),
                 'settings':{key:self.cfg.get(key)for key in ('mobile_asr_enabled','mobile_asr_provider','mobile_asr_model_id','mobile_asr_base_url','mobile_asr_model')},
                 'models':[{'id':m.get('id'),'name':m.get('name')or m.get('model')}for m in self.cfg.models()]}
 
     def asr_action(self,fields):
-        if fields.get('action')=='download':
+        if fields.get('action') in('prepare','download'):
             with self.lock:
                 if self.asr_job['running']:return {'ok':True,**self.asr_job}
-                self.asr_job={'running':True,'message':'正在从官方来源下载并校验 CPU 识别模型……'}
-                def download():
+                self.asr_job={'running':True,'message':'正在校验并展开安装包内置 CPU 识别模型，无需联网下载……'}
+                def prepare():
                     try:
                         from mobile_asr import install_model
                         install_model(self.home);self.asr_job={'running':False,'message':'CPU 识别模型已准备好'}
-                    except Exception as error:self.asr_job={'running':False,'message':'模型准备未完成：'+type(error).__name__+'，可重试'}
-                threading.Thread(target=download,daemon=True).start()
+                    except ValueError as error:self.asr_job={'running':False,'message':'内置模型准备未完成：'+str(error)[:180]}
+                    except Exception as error:self.asr_job={'running':False,'message':'内置模型准备未完成：'+type(error).__name__+'，请检查空间和安装包完整性后重试'}
+                threading.Thread(target=prepare,name='mobile-asr-prepare',daemon=True).start()
                 return {'ok':True,**self.asr_job}
         if fields.get('action')!='settings':raise ValueError('识别设置操作无效')
         provider=fields.get('provider')

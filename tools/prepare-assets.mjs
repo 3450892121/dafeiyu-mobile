@@ -2,12 +2,13 @@ import { mkdir, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { root, loadCatalogue, publicCatalogue, validateCatalogue } from './project-lib.mjs';
+import { prepareOfflineAssets } from './offline-assets-lib.mjs';
 
 const catalogue = await loadCatalogue();
 const errors = validateCatalogue(catalogue);
 if (errors.length) throw new Error(errors.join('\n'));
 const destination = path.join(root, 'app/build/generated/assets');
-// Ubuntu is fetched directly from its publisher on the phone; don't repackage its binaries.
+// Remove the legacy location; the complete fixed bundle has its own manifest and namespace.
 if(!process.argv.includes('--check'))await rm(path.join(destination,'runtime/base-arm64.tar.gz'),{force:true});
 const file = path.join(destination, 'features.json');
 const content = JSON.stringify(publicCatalogue(catalogue), null, 2) + '\n';
@@ -51,6 +52,10 @@ if(!process.argv.includes('--check')){
   if(JSON.stringify(JSON.parse(await readFile(path.join(destination,'runtime/payload-manifest.json'),'utf8')))!==JSON.stringify(manifest))throw Error('运行资源目录不同步');
 }
 console.log('runtime payload verified: '+entries.length);
+const offline=await prepareOfflineAssets(path.join(root,'.tools/offline-bundle'),path.join(destination,'runtime/offline'),{
+  check:process.argv.includes('--check'), expectedManifestPath:path.join(root,'runtime/offline-manifest.json'),
+});
+console.log('offline runtime assets verified: '+offline.files.length+'; bytes: '+offline.totalBytes);
 if(!process.argv.includes('--check')){
   const notices=[await readFile(path.join(root,'THIRD-PARTY-NOTICES.md'),'utf8')];
   for(const name of (await readdir(path.join(root,'runtime/licenses'))).sort())notices.push('\n\n'+name+'\n'+await readFile(path.join(root,'runtime/licenses',name),'utf8'));

@@ -16,7 +16,11 @@
 
 ## 私有运行层与兼容
 
-采用 APK 内的 ARM64 PRoot 进程，从官方来源下载并校验 Ubuntu 用户态、私有 QQ 和 NapCat；Python、数据库和任务均在本机。挂载只含本 App 的实例目录、运行源码、缓存、原生组件及必要的系统接口，实际权限仍受安卓沙箱限制；不挂载共享存储或其他 App 的资料。
+采用 APK 内的 ARM64 PRoot 进程；Ubuntu 基础归档、固定系统 deb 依赖闭包、Linux ARM64 Python wheels、完整 NapCat 归档和 CPU 识别模型随 APK 内置，在本 App 私有目录校验并初始化。仅没有公开再分发授权的 QQ 客户端按固定腾讯官方 HTTPS 来源下载并校验；不再要求手机访问 GitHub、Ubuntu 或 PyPI 下载运行组件。Python、数据库和任务均在本机。挂载只含本 App 的实例目录、运行源码、内置归档、缓存、原生组件及必要的系统接口，实际权限仍受安卓沙箱限制；不挂载共享存储或其他 App 的资料。
+
+内置大文件与业务源码资源分开清单管理：`runtime/offline-manifest.json` 固定每项相对路径、来源、大小、SHA256及依赖信息，构建缓存仅在本项目 `.tools/offline-bundle/`。最终签名APK必须逐项核对实际内置资产，不能只检查构建目录；禁止从已登录手机或其他实例复制运行目录作安装包来源。首次空间检查按内置归档体积及展开/临时文件预算，界面须说明安装包较大、准备时间与QQ联网例外。
+
+APT仅使用随包的Ubuntu官方签名InRelease和包索引、固定deb，禁用其他源与公网补下；PIP仅使用匹配Linux ARM64/Python3.12及完整目标环境依赖的wheel集合，以`--no-index`/仅二进制模式安装。APT固定快照可关闭其过期时间检查以支持后续从旧APK安装，但不得关闭签名/摘要验证、不得使用AllowUnauthenticated。快照更新通过新包交付。缺依赖、损坏包或索引不匹配时停止并明确报告，不伪造初始化完成。
 
 编译 SDK 35、最低 SDK 26，私有侧载包目标 SDK 28。原因：Android 10 起，目标 29 以上的 App 不得直接执行应用数据目录中的文件，而私有 Linux 用户态依赖此能力；见 [Android 官方变更](https://developer.android.com/about/versions/10/behavior-changes-10)。不得为了追高目标 SDK 做出无法执行的假安装包。此方案不用于应用商店发布，系统提示、16 KB 内存页和内核 ptrace 支持须真机核对。
 

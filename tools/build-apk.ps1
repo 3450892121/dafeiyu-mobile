@@ -88,11 +88,23 @@ try {
     [IO.File]::WriteAllText($manifestFile, $manifestText, [Text.UTF8Encoding]::new($false))
     $compiled = Join-Path $runRoot 'compiled-resources.zip'
     $resourcesApk = Join-Path $runRoot 'resources.ap_'
+    # Keep the bounded AAPT/normalization pass for small UI and business assets.
+    # The verified large archives are added later as stored ZIP entries, streaming from disk.
+    $generatedAssets = Project-Output 'app\build\generated\assets'
+    $aaptAssets = Join-Path $runRoot 'aapt-assets'
+    New-Item -ItemType Directory -Path $aaptAssets -Force | Out-Null
+    foreach ($asset in (Get-ChildItem -LiteralPath $generatedAssets -Recurse -File)) {
+        $relativeAsset = $asset.FullName.Substring($generatedAssets.Length + 1).Replace('\', '/')
+        if ($relativeAsset.StartsWith('runtime/offline/', [StringComparison]::Ordinal)) { continue }
+        $smallAsset = Join-Path $aaptAssets $relativeAsset
+        New-Item -ItemType Directory -Path (Split-Path -Parent $smallAsset) -Force | Out-Null
+        Copy-Item -LiteralPath $asset.FullName -Destination $smallAsset
+    }
     Invoke-Checked $aapt2 @('compile','--dir',(Join-Path $projectRoot 'app\src\main\res'),'-o',$compiled)
     Invoke-Checked $aapt2 @('link','-o',$resourcesApk,'-I',$androidJar,'--manifest',$manifestFile,
         '--java',$generatedJava,'--min-sdk-version',([string]$runtimeLayout.minSdk),'--target-sdk-version',([string]$runtimeLayout.targetSdk),
         '--version-code',$version.versionCode,'--version-name',$version.versionName,
-        '-A',(Join-Path $projectRoot 'app\build\generated\assets'),$compiled)
+        '-A',$aaptAssets,$compiled)
     $normalizedResources = Join-Path $runRoot 'resources-normalized.ap_'
     Invoke-Checked $java @('-cp',$testClasses,'NormalizeZip',$resourcesApk,$normalizedResources)
     $resourcesApk = $normalizedResources
@@ -111,6 +123,8 @@ try {
     $aligned = Join-Path $runRoot 'aligned.apk'
     Copy-Item -LiteralPath $resourcesApk -Destination $unsigned
     Invoke-Checked $jar @('--update','--file',$unsigned,'-C',$dex,'classes.dex')
+    Invoke-Checked $jar @('--update','--no-compress','--file',$unsigned,
+        '-C',(Join-Path $projectRoot 'app\build\generated'),'assets/runtime/offline')
     $nativeRoot = Project-Output 'app\build\generated\jni'
     foreach($name in @('libproot.so','libproot-loader.so','libtalloc.so','libandroid-shmem.so')) {
         if(-not(Test-Path -LiteralPath (Join-Path $nativeRoot ('arm64-v8a\'+$name)))){throw "Missing native runtime: $name"}
@@ -138,7 +152,9 @@ try {
     Invoke-Checked $java @('-jar',$apksigner,'verify','--verbose',$apk)
     Invoke-Checked $zipalign @('-c','-P','16','4',$apk)
     Invoke-Checked $aapt @('dump','badging',$apk)
-    Invoke-Checked $java @('-cp',$testClasses,'VerifyApk',$apk,(Join-Path $projectRoot 'app\build\generated\assets\runtime\payload-manifest.json'))
+    Invoke-Checked $java @('-cp',$testClasses,'VerifyApk',$apk,
+        (Join-Path $projectRoot 'app\build\generated\assets\runtime\payload-manifest.json'),
+        (Join-Path $projectRoot 'app\build\generated\assets\runtime\offline\manifest.json'))
     Invoke-Checked 'node' @('tools\fetch-native-sources.mjs','--check')
     $sourceStage = & node 'tools\package-native-sources.mjs'
     if($LASTEXITCODE -ne 0){throw 'Native source packaging failed.'}
