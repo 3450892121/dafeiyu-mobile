@@ -34,7 +34,7 @@ class Identity(object):
             nm = self.cfg.get("bot_name") if self.cfg else ""
         except Exception:
             nm = ""
-        return _clean_name(nm, 40) or "蓝色大肥鱼"
+        return _clean_name(nm, 40) or "机器人"
 
     def sync_self_id(self, qq):
         """Bot 登录后把真实 self_id 同步进来；0 不覆盖已有值。"""

@@ -117,7 +117,7 @@ def handle_command(bot, ev, uid, gid, is_group):
         return answer('这个 QQ 号无效，请核对后再说。')
     add = match.group(1) == '拉黑'
     if add and target in (uid, bot.self_id):
-        return answer('聊天里不能把你自己或大肥鱼自己拉黑。')
+        return answer('聊天里不能把你自己或当前机器人拉黑。')
     try:
         bot.store.change_blacklist(target, add)
     except ValueError as error:

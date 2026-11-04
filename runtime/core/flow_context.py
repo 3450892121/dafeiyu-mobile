@@ -337,7 +337,7 @@ class ContextMixin(object):
             if not is_group:
                 return "私聊发图"
             if self._at_self_seg(segs):
-                return "发图同时@了本鲸"
+                return "发图同时@了机器人"
             if self._ASK_IMAGE_RE.search(str(text or "")):
                 return "正文在问这张图"
             return ""
@@ -410,7 +410,7 @@ class ContextMixin(object):
         return sid
 
     def _bot_name(self):
-        """当前机器人的名字：优先用 Identity（读配置），缺配置时兜底「蓝色大肥鱼」。"""
+        """当前机器人的名字：优先用 Identity；缺配置时只用中性角色标签。"""
         ident = self._identity()
         if ident is not None:
             try:
@@ -421,10 +421,10 @@ class ContextMixin(object):
             nm = self.cfg.get("bot_name") if self.cfg else ""
         except Exception:
             nm = ""
-        return _clean_name(nm, 40) or "蓝色大肥鱼"
+        return _clean_name(nm, 40) or "机器人"
 
     def _bot_names(self):
-        """本鲸可能被叫到的名字（显示名 + 触发名），用于发现“昵称撞车”的号。"""
+        """本实例的显示名与触发名，不拼入其他机器人的旧称呼。"""
         out = []
         for fn in (self._bot_name, self._trigger_name):
             try:
@@ -831,16 +831,13 @@ class BotVoiceNoteMixin(object):
             r"(?:一下|下|了|着|过|起|到)?$", s))
 
     def _calls_bot(self, text):
-        """全名「蓝色大肥鱼」的明确叫法（快速通道）。
-
-        v0.23.0：短名「大肥鱼」和群里的同名号撞名，不再在这里判定，统一走
-        _judge_name_mention；这里只给全名的光叫/后跟触发词/前置「在吗」省一次
-        模型调用。第三人称前缀（叫/问/找/说…）照旧不算。
-        """
+        """当前显示名的明确叫法走快速通道；触发名另交名字判断。"""
         body = str(text or "").strip()
         if not body:
             return False
-        name = self._bot_name()
+        name = str(self._bot_name() or "").strip()
+        if not name:
+            return False
         markers = (
             "在不在", "在吗", "在么", "在嘛", "出来", "醒醒", "别装死", "帮我", "帮忙",
             "看看", "看下", "看一下", "说话", "说句话", "理我", "回答", "回我", "过来",
@@ -870,12 +867,12 @@ class BotVoiceNoteMixin(object):
         return False
 
     def _trigger_name(self):
-        """触发判断的名字：默认「大肥鱼」（短名，和群里的同名号撞名）；显示名仍是 bot_name。"""
+        """只读本实例当前触发名，缺项时沿用当前显示名。"""
         try:
-            nm = str(self.cfg.get("trigger_name") or "大肥鱼").strip()
+            nm = self.cfg.get("trigger_name") or self.cfg.get("bot_name")
         except Exception:
-            nm = "大肥鱼"
-        return nm or "大肥鱼"
+            nm = ""
+        return _clean_name(nm, 40) or "机器人"
 
     @staticmethod
     def _contains_name(text, name):
@@ -887,7 +884,7 @@ class BotVoiceNoteMixin(object):
         return bool(re.search(pat, body, re.I))
 
     def _name_mentioned(self, text):
-        """正文里有没有触发名；「蓝色大肥鱼」里的「大肥鱼」也算。"""
+        """正文里是否出现当前触发名。"""
         return self._contains_name(text, self._trigger_name())
 
     def _judge_history_lines(self, conv, limit=10):
@@ -948,11 +945,11 @@ class BotVoiceNoteMixin(object):
             same = self.store.same_name_people(self._self_qq(), self._bot_names(), 5) or []
         except Exception:
             same = []
-        same_line = ("- 同名号：群里可能还有别的号叫「大肥鱼」或「蓝色大肥鱼」，"
+        same_line = ("- 同名号：群里可能还有昵称相似或相同的其他账号，"
                      "历史里标了「（同名号，不是你）」，那不是你。")
         if same:
             same_line += "已知的：" + "、".join(
-                "「%s」(QQ%d)" % (x.get("name") or "大肥鱼", x.get("qq") or 0) for x in same) + "。"
+                "「%s」(QQ%d)" % (x.get("name") or "未知", x.get("qq") or 0) for x in same) + "。"
         lines = [
             "你是群聊消息分流判断器，只判断，不聊天。",
             "",
@@ -961,9 +958,9 @@ class BotVoiceNoteMixin(object):
             same_line,
             "",
             "现在这条群消息里出现了「%s」。判断发送人是不是在叫当前机器人、在问它的事、或者需要它接话。" % trigger,
-            "reply：直接叫当前机器人（光叫「大肥鱼」、「大肥鱼在吗」「大肥鱼你咋看」「大肥鱼他说的是啥」「大肥鱼帮我看下」）、问它的事、跟它有关且需要它接话。",
-            "如果正文只有「大肥鱼」（或只有标点/语气词），算直接叫当前机器人，reply。",
-            "drop：只是提到名字/说第三人（“大肥鱼今天没来”“大肥鱼说今天不来”“那个大肥鱼真菜”“叫大肥鱼过来”“我想找大肥鱼”“大肥鱼的表情包”）、明显在跟别人说话、说的是同名号。",
+            f"reply：直接叫当前机器人（光叫「{trigger}」、「{trigger}在吗」「{trigger}你咋看」「{trigger}他说的是啥」「{trigger}帮我看下」）、问它的事、跟它有关且需要它接话。",
+            f"如果正文只有「{trigger}」（或只有标点/语气词），算直接叫当前机器人，reply。",
+            f"drop：只是提到名字/说第三人（“{trigger}今天没来”“{trigger}说今天不来”“那个{trigger}真菜”“叫{trigger}过来”“我想找{trigger}”“{trigger}的表情包”）、明显在跟别人说话、说的是同名号。",
             "如果这条 @ 了别人：除非正文明确在叫当前机器人，否则 drop。",
             "拿不准时 drop。",
             "",
@@ -1007,7 +1004,7 @@ class BotVoiceNoteMixin(object):
                 self._log_name_judge(conv, name, "drop", "判断输出没法解析", False)
                 return False, "判断输出没法解析，先不回"
             if not reason:
-                reason = "在叫本鲸" if act == "reply" else "只是提到名字"
+                reason = "在叫当前机器人" if act == "reply" else "只是提到名字"
             log("gate", "名字判断 conv=%s name=%s act=%s | %s"
                 % (conv, name, act, reason))
             self._log_name_judge(conv, name, act, reason, act == "reply")
@@ -1030,11 +1027,7 @@ class BotVoiceNoteMixin(object):
         return bool(v)
 
     def _addressed(self, segs, text, quote=None, is_group=True):
-        """硬门控：私聊 / @自己 / 引用本鲸 → 是；其余看名字判断。
-
-        短名「大肥鱼」命中后不在这里直接回，交给 main 的 _judge_name_mention；
-        全名「蓝色大肥鱼」的明确叫法（在吗/帮我/你…）仍走快速通道。
-        """
+        """私聊、@自己、引用自己保持原规则；文本叫名只认当前实例配置。"""
         try:
             if not is_group:
                 return True, "私聊"
@@ -1069,7 +1062,7 @@ class BotVoiceNoteMixin(object):
                 return False, "@了全体成员，没有@你"
             if quote and (quote.get("is_self") or quote.get("is_bot")):
                 if self._cfg_on("group_trigger_quote", True):
-                    return True, "引用了本鲸以前发的消息"
+                    return True, "引用了机器人以前发的消息"
             if self._cfg_on("group_trigger_name", True):
                 if self._calls_bot(text):
                     return True, "正文直接叫了%s" % full

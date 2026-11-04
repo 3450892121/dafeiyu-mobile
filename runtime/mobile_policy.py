@@ -27,7 +27,8 @@ def initialize(home=None):
     ports = LAYOUT['ports']
     config.DEFAULT_MODELS = []
     config.DEFAULTS.update({
-        'bot_name':'大肥鱼', 'trigger_name':'大肥鱼', 'owner_qq':0, 'owner_name':'',
+        'bot_name':'纳西妲', 'trigger_name':'小妲', 'owner_qq':0, 'owner_name':'',
+        'group_at_reply':False, 'group_at_reply_at':False, 'group_at_reply_name':False, 'group_at_reply_quote':False,
         'allow_users':[], 'allow_groups':[], 'allow_all_users':False,
         'login_uin':'', 'models':[], 'api_key':'',
         'onebot_api':'http://127.0.0.1:%d' % ports['onebot'],

@@ -89,6 +89,21 @@ def memory_similarity(a, b, variants=None):
     return text_similarity(a, b)
 
 
+def _current_bot_names(bot):
+    """仅把当前实例的名称和触发词当作自己的别名，不改写历史正文。"""
+    try:
+        names = bot._bot_names()
+    except Exception:
+        cfg = getattr(bot, "cfg", None) or {}
+        names = [cfg.get("bot_name"), cfg.get("trigger_name")]
+    result = []
+    for value in names or []:
+        name = _clean_name(value, 40)
+        if name and name not in result:
+            result.append(name)
+    return result
+
+
 def pick_canonical_name(candidates, limit=20):
     """从「事件昵称 / people.name / 历史别名」里挑规范短昵称，避免把超长群名片写进卡和记忆。"""
     clean = []
@@ -177,7 +192,7 @@ def memory_quality_gate(text, kind="fact", importance=3, scope="person"):
     if len(t) < 6 or len(t) > 160:
         return False, imp, "长度不合适"
     if _BOT_FAIL_RE.search(t):
-        return False, imp, "本鲸自己的技术故障/看不见图/模型名"
+        return False, imp, "机器人自己的技术故障/看不见图/模型名"
     if scope == "shared":
         return True, imp, ""
     stable = bool(_STABLE_RE.search(t))
@@ -191,14 +206,12 @@ def memory_quality_gate(text, kind="fact", importance=3, scope="person"):
     return True, imp, ""
 
 
-_CARD_REVERSED_RE = re.compile(
-    r"(?:对方|他|她)(?:是|自称|是自称|自称是|自称自己|其实是|就是)[^。；;！!？?\n]{0,18}"
-    r"(?:本鲸|鲸大人|大肥鱼|肥鱼|本鱼)", re.I)
-
-
-def card_role_reversed(text):
-    """模型把「对方」写成本鲸自己时的特征句，命中就不让覆盖旧卡。"""
-    return bool(_CARD_REVERSED_RE.search(str(text or "")))
+def card_role_reversed(text, bot_names=None):
+    """模型把「对方」写成当前机器人时的特征句，不把其他角色名当成自己。"""
+    labels = ["本机器人", "机器人自己"] + [str(n) for n in (bot_names or []) if n]
+    pattern = (r"(?:对方|他|她)(?:是|自称|是自称|自称是|自称自己|其实是|就是)[^。；;！!？?\n]{0,18}"
+               r"(?:%s)" % "|".join(re.escape(n) for n in labels))
+    return bool(re.search(pattern, str(text or ""), re.I))
 
 
 def familiarity_score(msg_count, first_seen, last_seen, now=None):
@@ -263,9 +276,9 @@ def build_memory_prompt(identity, who_list, transcript, existing=""):
             "哪怕你怼回去了也算），juice 1-5，"
             "evidence 填证据那条消息的编号（数字，不要带 #）：tattle 必须填『对方 @你/叫你名字/引用你』的那条；"
             "share 填能证明这件事的那条。找不到可靠证据就 worth=false。"
-            "注意：别人之间互怼、同名号（另一个大肥鱼）被怼/怼人、管理员跟别人说话，都不是你的事——"
+            "注意：别人之间互怼、同名号被怼/怼人、管理员跟别人说话，都不是你的事——"
             "一律 worth=false，不要输出 share；分不清是谁做的也 worth=false。"
-            "例：记录里「大肥鱼（同名号，不是你）(QQ4014334076)：认你为主？…」是同名号在说话，"
+            "例：记录里「同名群友（同名号，不是你）(QQ4014334076)：认你为主？…」是同名号在说话，"
             "不是你，share.worth=false。"
             "反过来，有人先挑事逗你/骂你、你回怼了一句，这算 share（你怼回去了），actor=self，worth=true；"
             "但只是别人随口提一嘴、顺嘴一说、跟你没关系的闲话、普通日常斗嘴，一律 worth=false；juice 必须 ≥3 才 worth=true。\n"
@@ -550,6 +563,7 @@ class MemoryMixin(object):
                 return 0
             speakers = {}
             labels = {}
+            bot_names = _current_bot_names(self)
             lines = []
             source_records = []
             try:
@@ -585,8 +599,8 @@ class MemoryMixin(object):
                         speakers[qq] = nm
                         labels[qq] = self._canonical_name(qq, nm)
                     who = labels.get(qq, nm)
-                    # 群里可能有同名号（也叫大肥鱼）：聊天记录里标出来，整理器才不会把别人的话当成自己说的
-                    if qq and self_qq and qq != self_qq and "大肥鱼" in str(who):
+                    # 同名标记只改展示标签，真实发言与来源不变。
+                    if qq and self_qq and qq != self_qq and any(n in str(who) for n in bot_names):
                         who = who + "（同名号，不是你）"
                     elif qq and qq in other_map:
                         who = who + "（别的AI号，不是你）"
@@ -744,7 +758,7 @@ class MemoryMixin(object):
                         except Exception:
                             group_cache[gid] = []
                     dup, ratio = self._find_duplicate(text, group_cache[gid],
-                                                      variants=["蓝色大肥鱼", "大肥鱼", str(gid)], threshold=0.68)
+                                                      variants=bot_names + [str(gid)], threshold=0.68)
                     if dup and kind == "event" and norm_memory(text) != norm_memory(dup.get("text")):
                         dup = None
                     if dup:
@@ -770,7 +784,7 @@ class MemoryMixin(object):
                             person_cache[qq] = self.store.list_person_memories(qq, 200) or []
                         except Exception:
                             person_cache[qq] = []
-                    variants = [labels.get(qq), speakers.get(qq), str(qq), "QQ%d" % qq, "蓝色大肥鱼", "大肥鱼"]
+                    variants = [labels.get(qq), speakers.get(qq), str(qq), "QQ%d" % qq] + bot_names
                     try:
                         variants += self._person_stats(qq).get("aliases") or []
                     except Exception:
@@ -848,7 +862,7 @@ class MemoryMixin(object):
                 text = self._canonicalize_names(text, speakers, labels)
                 same_people = [m for m in (shared_cache or []) if sorted(_as_int(x) for x in (m.get("people") or [])) == sorted(pts)]
                 dup, ratio = self._find_duplicate(text, same_people,
-                                                  variants=["蓝色大肥鱼", "大肥鱼"] + [labels.get(x) or "" for x in pts],
+                                                  variants=bot_names + [labels.get(x) or "" for x in pts],
                                                   threshold=0.7)
                 if dup:
                     if self._merge_memory_text("shared_memories", dup, text, ratio, "people=%s" % pts):
@@ -1041,7 +1055,8 @@ class MemoryMixin(object):
             old = self.store.get_profile(qq) or {}
             old_stable = (old.get("card") or "").strip()
             old_recent = (old.get("recent") or "").strip()
-            if old_stable and card_role_reversed(old_stable):
+            bot_names = _current_bot_names(self)
+            if old_stable and card_role_reversed(old_stable, bot_names):
                 # 旧卡把本鲸自己写成了对方：不能当“已有档案”喂回去，否则模型只会换个主语照抄
                 log("card", "旧卡角色颠倒，按空档案重写 qq=%s" % qq)
                 old_stable = ""
@@ -1051,11 +1066,11 @@ class MemoryMixin(object):
                 return None
             head = ("你是人物档案助手。先把角色认清：\n"
                     "- 「本机器人（你）」是出站记录的角色标签，不是名字或自称要求。按 QQ 与出站/入站角色核对发言归属；自称、昵称相同也不能据此认领别人的话。\n"
-                    "- 别人叫「大肥鱼」时，可能是在叫群里另一个同名号，不要当成自己。\n"
+                    "- 别人叫当前名称「%s」时，也可能是在叫同名号；按 QQ 与发言角色确认，不直接当成自己。\n"
                     "- %s(QQ%d) 是「对方」，是你要写档案的这个人。\n"
                     "stable 写的是 %s(QQ%d) 的档案，不是你；不要把你自己写进对方档案，"
                     "也不要把机器人自己的形象或自称写成这个人的档案。\n"
-                    % (display, qq, display, qq))
+                    % ("」/「".join(bot_names) or "当前机器人", display, qq, display, qq))
             prompt = (head +
                       "只输出 JSON：{\"stable\":\"稳定档案\",\"recent\":\"最近状态\"}\n"
                       "stable：这个人的身份/性格/长期喜好/雷区/你们的关系，150~300 字；只写聊天里有依据的，绝不编造；"
@@ -1086,7 +1101,7 @@ class MemoryMixin(object):
                 stable = old_stable
             res = {"qq": qq, "name": display, "stable": stable, "recent": recent,
                    "old_stable": old_stable, "old_recent": old_recent,
-                   "reversed": bool(card_role_reversed(stable) or card_role_reversed(recent)),
+                   "reversed": bool(card_role_reversed(stable, bot_names) or card_role_reversed(recent, bot_names)),
                    "applied": False}
             if res["reversed"]:
                 log("card", "检测到角色颠倒，保留旧卡 qq=%s" % qq)

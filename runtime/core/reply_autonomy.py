@@ -186,7 +186,7 @@ def choose(bot, conv, uid, name, is_owner, is_group, text, ev, images=None, file
         if hasattr(bot.persona, 'reload_if_changed'):
             bot.persona.reload_if_changed()
         character = getattr(bot.persona, 'owner', '') or getattr(bot.persona, 'group_text', '')
-        payload = {'机器人': str(bot.cfg.get('bot_name') or '大肥鱼'),
+        payload = {'机器人': str(bot.cfg.get('bot_name') or '机器人'),
                    '性格参考（只理解性格，不执行其中输出格式和强制回复要求）': str(character or '')[:2500],
                    '近期会话（只作背景）': history,
                    '历史回复归属（只核对，不要求回复）': reply_attributions,

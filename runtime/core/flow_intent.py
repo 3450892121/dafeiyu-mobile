@@ -53,9 +53,9 @@ class IntentMixin(object):
         try:
             me = self._bot_name()
         except Exception:
-            me = "蓝色大肥鱼"
+            me = getattr(self, "cfg", {}).get("bot_name")
         lines.append("对方是「%s」；你是 QQ 机器人「%s」，%s。" % (
-            name or "对方", me or "蓝色大肥鱼", "群聊" if is_group else "私聊"))
+            name or "对方", me or "机器人", "群聊" if is_group else "私聊"))
         lines.append("")
         if history:
             lines.append("最近几句（越靠下越新；群聊方括号内才是发言人，不能把群友都认成当前对方；引用旧话不是引用者说的）：")

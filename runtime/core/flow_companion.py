@@ -95,7 +95,10 @@ class CompanionMixin:
             timer.start()
 
     def _companion_quiet_request(self, gid, text, addressed):
-        if (addressed or "大肥鱼" in text or "本鲸" in text) and re.search(
+        names = [str(self.cfg.get(key) or "").strip() for key in ("bot_name", "trigger_name")]
+        called = any(name and re.search(r"\s*".join(re.escape(ch) for ch in name), text, re.I)
+                     for name in names)
+        if (addressed or called) and re.search(
                 r"(?:别|不要|不用|停止|不许)(?:再|来)?(?:插话|插嘴|说话|接话|发言)", text):
             self._companion_state.quiet(gid)
             self.store.add_log("companion", "群%d 要求安静，暂停自主发言30分钟" % gid, True)

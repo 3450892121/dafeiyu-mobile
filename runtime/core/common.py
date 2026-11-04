@@ -71,8 +71,8 @@ def parse_other_bots(raw):
 
 
 
-def message_targets_bot(row, self_qq, other_bots=""):
-    """一条消息是不是在跟本鲸说：@了本鲸 / 引用了本鲸 / 正文叫了本鲸的名字。
+def message_targets_bot(row, self_qq, other_bots="", bot_names=()):
+    """按当前实例的名字、真实 @ 和引用判断，不继承其他机器人的叫法。
 
     只在“别人说的话”（direction=in）上判断。返回 (bool, 原因)。
     """
@@ -100,7 +100,10 @@ def message_targets_bot(row, self_qq, other_bots=""):
         elif q in other:
             at_other.append("%s(QQ%d)" % (other[q], q))
     text = str(d.get("text") or "")
-    name_hit = bool(re.search(r"(?:大肥鱼|本鲸)", text))
+    if isinstance(bot_names, str):
+        bot_names = [bot_names]
+    name_hit = any(re.search(r"\s*".join(re.escape(ch) for ch in name), text, re.I)
+                   for name in (str(value or "").strip() for value in (bot_names or ())) if name)
     quote_self = False
     try:
         for a in json.loads(d.get("attachments") or "[]"):
@@ -109,10 +112,10 @@ def message_targets_bot(row, self_qq, other_bots=""):
     except Exception:
         pass
     if at_other and not at_self and not name_hit and not quote_self:
-        return False, "这条是在@%s，不是本鲸" % "、".join(at_other)
+        return False, "这条是在@%s，不是当前机器人" % "、".join(at_other)
     if at_self or quote_self or name_hit:
         return True, "at_self=%s quote_self=%s name=%s" % (at_self, quote_self, name_hit)
-    return False, "没@本鲸、没引用本鲸、也没叫本鲸名字"
+    return False, "没@当前机器人、没引用自己、也没叫当前实例的名字"
 
 
 def group_at_kind(addr_reason):
@@ -120,21 +123,21 @@ def group_at_kind(addr_reason):
     r = str(addr_reason or "")
     if r.startswith("被@了自己"):
         return "at"
-    if r.startswith("引用了本鲸"):
+    if r.startswith(("引用了机器人", "引用了本鲸")):
         return "quote"
     if r.startswith("正文直接叫了") or r.startswith("名字判断："):
         return "name"
     return ""
 
 
-def bot_identity_note(self_qq, bot_name="蓝色大肥鱼", other_bots=""):
+def bot_identity_note(self_qq, bot_name="机器人", other_bots=""):
     """分享/记忆整理共用：先把「谁是你」说清楚，防止把同名号/别的 AI 的话当成自己说的。"""
     qq = _as_int(self_qq)
-    name = str(bot_name or "蓝色大肥鱼").strip() or "蓝色大肥鱼"
+    name = str(bot_name or "机器人").strip() or "机器人"
     who = ("你是 QQ 机器人「%s」（QQ%d）。" % (name, qq)) if qq else ("你是 QQ 机器人「%s」。" % name)
     note = (who + "聊天记录中的「本机器人（你）」只是出站发言的角色标签，不是名字、自称或昵称；"
             "发言归属按 QQ 与入站/出站角色核对，只有你自己的出站记录才是你说的；"
-            "群里可能还有别的号也叫「大肥鱼」或「蓝色大肥鱼」，那不是你——"
+            "群里可能还有昵称相似或相同的其他账号，QQ 号不同就不是你——"
             "他们说的话、他们被怼的事，都不算你的遭遇。")
     names = list(dict.fromkeys(parse_other_bots(other_bots).values()))
     if names:

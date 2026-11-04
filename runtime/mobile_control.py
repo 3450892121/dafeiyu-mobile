@@ -170,7 +170,7 @@ class Control:
         return result
 
     def save_basic(self, fields):
-        allowed={'login_uin','owner_qq','bot_name','owner_name','allow_users','allow_groups','weather_home_city'}
+        allowed={'login_uin','owner_qq','bot_name','trigger_name','owner_name','allow_users','allow_groups','weather_home_city'}
         changes={}
         for key,value in fields.items():
             if key not in allowed: raise ValueError('不允许修改该字段')
@@ -181,6 +181,9 @@ class Control:
             elif key in ('allow_users','allow_groups'):
                 if not isinstance(value,list) or len(value)>1000: raise ValueError('名单格式无效')
                 value=[int(v) for v in value if str(v).isdigit() and int(v)>0]
+            elif key in ('bot_name','trigger_name'):
+                value=str(value).strip()
+                if not value or len(value)>40 or any(ord(ch)<32 for ch in value):raise ValueError('名称和唤醒词须为1至40个可见字符')
             else: value=str(value).strip()[:80]
             changes[key]=value
         if str(changes.get('login_uin',self.cfg.get('login_uin')))==str(changes.get('owner_qq',self.cfg.get('owner_qq'))):
@@ -294,7 +297,7 @@ def server(control,port=None):
                 if route=='/api/urls':return self.response(200,control.urls())
                 if route=='/api/asr':return self.response(200,control.asr_status())
                 if route=='/api/privacy':return self.response(200,control.privacy())
-                if route=='/api/basic':return self.response(200,{'ok':True,**{k:control.cfg.get(k) for k in ('login_uin','owner_qq','bot_name','owner_name','allow_users','allow_groups','weather_home_city')}})
+                if route=='/api/basic':return self.response(200,{'ok':True,**{k:control.cfg.get(k) for k in ('login_uin','owner_qq','bot_name','trigger_name','owner_name','allow_users','allow_groups','weather_home_city')}})
                 if route=='/api/log':
                     lines=[]
                     for name in ('bot.log','console.log','brain-process.log'):

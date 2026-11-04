@@ -654,7 +654,7 @@ class ProactiveMixin(object):
                 cand["is_owner"], cand.get("nick") or "对方", False,
                 now_line=self._proactive_now_line())
         except Exception:
-            system = "你是蓝色大肥鱼。"
+            system = "你是 QQ 机器人「%s」。" % (self.cfg.get("bot_name") or "机器人")
         system, cand["_growth_provided_ids"] = self._proactive_personal_context(
             system, cand["conv"], cand["uid"], (hook or {}).get("material") or "", cand["is_owner"], with_ids=True)
         prompt = self._proactive_open_prompt(cand, idle_min, hook)
@@ -1702,12 +1702,12 @@ class ProactiveMixin(object):
             # 分享如果给了证据，也要么是别人对本鲸说的、要么是本鲸自己说的。
             evidence = self._share_evidence(share, rows)
             if kind == "tattle":
-                ok_e, why_e = message_targets_bot(evidence, self._self_qq(), self.cfg.get("other_bots") or "")
+                ok_e, why_e = message_targets_bot(evidence, self._self_qq(), self.cfg.get("other_bots") or "", self._bot_names())
                 if not ok_e:
                     self._share_log("告状证据对不上（%s），跳过 | %s" % (why_e, line[:40]), False)
                     return
             elif evidence is not None and str(evidence.get("direction") or "") != "out":
-                ok_e, why_e = message_targets_bot(evidence, self._self_qq(), self.cfg.get("other_bots") or "")
+                ok_e, why_e = message_targets_bot(evidence, self._self_qq(), self.cfg.get("other_bots") or "", self._bot_names())
                 if not ok_e:
                     self._share_log("分享证据对不上（%s），跳过 | %s" % (why_e, line[:40]), False)
                     return

@@ -9,7 +9,7 @@ class OpsApi(BaseOps):
     def bots(self):
         self.registry_error = ''
         return [{
-            'id':'mobile', 'name':self.cfg.get('bot_name') or '大肥鱼',
+            'id':'mobile', 'name':self.cfg.get('bot_name') or '机器人',
             'channel':'napcat','channel_label':'本机 QQ 小号',
             'account':str(self.cfg.get('login_uin') or ''),
             'panel':'http://127.0.0.1:%d' % int(self.cfg.get('admin_port')),

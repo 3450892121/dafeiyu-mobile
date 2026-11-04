@@ -73,12 +73,11 @@ DRAW_SIZE_DEFAULT = "1.5K"
 DRAW_SIZE_HD = "2K"
 DRAW_SIZES = {DRAW_SIZE_DEFAULT, DRAW_SIZE_HD}
 
-# 本鲸本人的样子：直接抄人设原文（appassets/persona_*.txt 第 2 行），
-# 不然画图模型会把「大肥鱼」按字面画成一条胖鱼（2026-10-23 真机就画成了河豚和鲸鱼）。
-SELF_LOOK = ("蓝色大肥鱼本人：蓝发鲸鱼娘女仆——一头蓝色渐变的头发，头顶一撮压不下去的呆毛，"
-             "耳朵的位置是一对鲸鱼头鳍，身后拖着一条大鲸尾，穿深蓝镶白边的女仆装，围裙上挂着圆围兜，蓝眼睛。"
-             "Q 版二次元画风。她不是鱼，不是真人，也不是成年男性。")
-SELF_AVATAR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "avatar-src.jpg")
+# Self portraits use the current instance's appearance text and optional local
+# self-avatar, never a reference deployment's hard-coded character or artwork.
+_SELF_APPEARANCE = re.compile(
+    r"^(?:你的|当前角色的)?(?:形象|外貌|外观|发色|发型|眼睛|瞳色|服饰|衣着|衣饰|头发)"
+    r"(?:\s*[:：]|为|是|设定为|可以用)")
 
 # ---------- v0.58.6：模型自己调用的工具（OpenAI function calling） ----------
 # 以前「做个文档」全靠正则认口令：认不出就掉进闲聊、嘴上答应实际不发；认出来时正文
@@ -278,9 +277,9 @@ _NOTE_BAD_RE = re.compile(r"(加微信|加qq|加QQ|扫码|二维码|链接|https
 
 
 def draw_self_hint(text, quote=None):
-    """这句话是不是在画“本鲸自己”（而不是随便画条鱼）。"""
+    """这句话是不是在画当前机器人自己，而不是另一角色或动物。"""
     t = str(text or "")
-    if re.search(r"(?:本鲸|你自己|你本人|你长啥样|你长什么样|自画像|你(?:的)?照片|画你自己|画一个你)", t):
+    if re.search(r"(?:你自己|你本人|你长啥样|你长什么样|自画像|你(?:的)?照片|画你自己|画一个你)", t):
         return True
     try:
         if isinstance(quote, dict) and quote.get("is_bot") and quote.get("images"):
@@ -305,7 +304,7 @@ DRAW_INTENT_SYS = """你是"要不要画图"的意图判定器，只在主人明
 3. 说"参考/照着/照这张/按这张"并且这一轮带了图或引用了带图的消息 → draw=true，ref 填 current 或 quote。
    - 只要引用的那条消息里带图，而主人说的是"这张/这种画风/你看看刚才那张/按这个改"，ref 就填 quote（别填 recent）。
 4. 说"刚才那张/上面那张/你刚画的那张" → ref=recent。
-   - 说"你自己/你自己照片/你长啥样/画你自己/本鲸" → ref=self。
+   - 说"你自己/你自己照片/你长啥样/画你自己" → ref=self。
 5. 只说"画点什么/随便画/画个东西"而没说清画什么 → draw=true，但 subject 留空。
 6. 只要不是让你亲自画一张新图，一律 draw=false。
 7. 主人说“高清/超清/画清楚点/要清楚一点/大图/当壁纸/2K/高分辨率”才算 res="hd"；没说就是 res="default"。
@@ -831,8 +830,9 @@ class MediaMixin(object):
         """让模型自己写画图提示词；模型失败就退回主人原话。"""
         user = ""
         if self_hint:
-            user += ("【本鲸本人形象】%s\n（这次的主角就是本鲸本人，必须按上面的形象画；"
-                     "不要画成鱼，不要画成真人男性。）\n" % SELF_LOOK)
+            user += ("【当前角色自画像】%s\n"
+                     "只采用本实例明确的外观资料和本轮参考图，不套用其他机器人的形象。\n"
+                     % self._draw_self_look())
         user += "要画的内容：%s\n" % subject
         rt = str(raw_text or "").strip()
         if rt and rt != subject:
@@ -850,10 +850,40 @@ class MediaMixin(object):
             log("draw", "提示词生成失败 %r" % (e,))
         p = subject if not ref_desc else subject + "，参考图的主体和风格"
         if self_hint:
-            p = SELF_LOOK + "，画面内容：" + p
+            p = self._draw_self_look() + "，画面内容：" + p
         if "文字" not in p:
             p += "，画面中不要出现任何文字、水印或logo"
         return p[:600]
+
+    def _draw_self_look(self):
+        """Only identity/appearance, not private notes or learned memories, goes into an image prompt."""
+        name = capabilities.character_name(self.cfg)
+        persona = getattr(self, 'persona', None)
+        text = ''
+        if persona:
+            try:
+                persona.reload_if_changed()
+                text = str(getattr(persona, 'self_text', '') or
+                           getattr(persona, 'identity', '') or '')
+            except Exception:
+                pass
+        appearance = [line.strip('-* \t') for line in text.splitlines()
+                      if _SELF_APPEARANCE.search(line.strip('-* \t'))]
+        if appearance:
+            return '当前角色「%s」；已明确的外观资料：%s' % (name, '；'.join(appearance[:4])[:400])
+        return '当前角色「%s」的自画像；外观细节以本轮明确资料或参考图为准，不虚构其他角色的固定外观' % name
+
+    def _draw_self_avatar(self):
+        """An explicit self-avatar belongs to this persona directory only."""
+        assets = str(getattr(getattr(self, 'persona', None), 'assets', '') or '')
+        if not assets:
+            return ''
+        root = os.path.realpath(assets)
+        for name in ('self-avatar.png', 'self-avatar.jpg', 'self-avatar.jpeg', 'self-avatar.webp'):
+            path = os.path.join(root, name)
+            if os.path.isfile(path) and os.path.dirname(os.path.realpath(path)) == root:
+                return path
+        return ''
 
     def _draw(self, subject, conv, is_group, gid, uid, ref_segs=None, raw_text="", hq=False, self_hint=False):
         """画图主流程：取参考图 → 模型写提示词 → 调 Seedream → 下载 → 发出去。
@@ -887,10 +917,11 @@ class MediaMixin(object):
                         log("draw", "参考图读取失败 %r" % (e,))
                 if data:
                     ref_bytes.append(data)
-            if self_hint and os.path.isfile(SELF_AVATAR):
+            self_avatar = self._draw_self_avatar() if self_hint else ''
+            if self_avatar:
                 # 本人形象优先：头像放第一张，参考图最多两张
                 try:
-                    with open(SELF_AVATAR, "rb") as f:
+                    with open(self_avatar, "rb") as f:
                         ref_bytes.insert(0, f.read(int(self.cfg.get("vision_max_bytes") or 8388608)))
                 except Exception as e:
                     log("draw", "读本人头像失败 %r" % (e,))

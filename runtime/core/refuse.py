@@ -73,19 +73,26 @@ LINES = {
     },
 }
 
+DEFAULT_LINES = {
+    "office": ["这个操作需要管理员明确授权。", "请先让管理员确认这项操作。"],
+    "qzone": ["发布空间需要管理员明确授权。", "这次发布需要先由管理员确认。"],
+    "billing": ["用量与费用属于管理资料，我不能向其他人透露。", "这项管理资料只向已确认的管理员提供。"],
+    "reminder_full": ["当前提醒数量已满，先等已有提醒完成。", "提醒暂时排满了，请稍后再试。"],
+}
+
 
 def _match(name):
     s = str(name or "")
     for key in ("蓝色大肥鱼", "缇宝", "哦鲸鲸"):
         if key in s:
             return key
-    return "蓝色大肥鱼"
+    return "default"
 
 
 def line(bot_name, kind, conv, store):
     """轮流取一句，最近 24 小时不重复。"""
     key = _match(bot_name)
-    arr = (LINES.get(kind) or {}).get(key) or (LINES.get(kind) or {}).get("蓝色大肥鱼") or ["这个我不接。"]
+    arr = (LINES.get(kind) or {}).get(key) or DEFAULT_LINES.get(kind) or ["这个请求目前无法执行。"]
     try:
         idx = int(store.get_setting("refuse:idx:%s:%s" % (key, kind)) or 0)
     except Exception:
@@ -117,4 +124,6 @@ def reminder_ack(bot_name, when):
         return "好呀，%s我喊你。" % when
     if key == "哦鲸鲸":
         return "行，%s。到点喊你。" % when
-    return "行，%s。到点本鲸喊你。" % when
+    if key == "蓝色大肥鱼":
+        return "行，%s。到点本鲸喊你。" % when
+    return "已记下，%s到点提醒你。" % when

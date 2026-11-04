@@ -119,7 +119,6 @@ def _wants_long(text):
 # 2026-10-26 实测翻车：主人说「你看我小号被人莫名其妙举报了，你发个QQ空间帮我吐槽一下」，
 # 口令没命中 → 落到模型嘴上答应「这就去」，实际一条说说都没发。
 _QZONE_VERB_RE = re.compile(
-    r"(?:^|[，,。；;！!～~\s])\s*(?:蓝色)?(?:大肥鱼|本鲸)?\s*"
     r"(?:你|去|帮我|给我|快|赶快|替我)*\s*"
     r"发\s*[个条]?\s*(?:一[个条])?\s*(?:QQ\s*)?(?:空间|说说)")
 # 动词前面出现这些词 = 不是在叫它发（否定/追问/抱怨），不能误触发
@@ -130,7 +129,7 @@ _QZONE_NOT_CMD_POST_RE = re.compile(
     r"^\s*(吗|呢|的话|这事|这件事|这回事|干嘛|有什么用|太|挺麻烦|真麻烦|了没|了吗|没有|了|过)")
 
 
-def _qzone_cmd(text):
+def _qzone_cmd(text, bot_names=()):
     """主人这句话是不是「让发一条空间」的命令。
 
     是就返回 (topic, span)：topic 是去掉"发个空间"之后剩下的话（当"为什么要发"给写作模型），
@@ -140,7 +139,12 @@ def _qzone_cmd(text):
     t = str(text or "").strip()
     if not t or re.search(r"[?？]", t):
         return None, None
-    m = _QZONE_VERB_RE.search(t)
+    if isinstance(bot_names, str):
+        bot_names = [bot_names]
+    names = sorted({str(n or "").strip() for n in (bot_names or ()) if str(n or "").strip()}, key=len, reverse=True)
+    name_prefix = r"(?:" + "|".join(re.escape(n) for n in names) + r")?\s*" if names else ""
+    command = re.compile(r"(?:^|[，,。；;！!～~\s])\s*" + name_prefix + _QZONE_VERB_RE.pattern)
+    m = command.search(t)
     if not m:
         return None, None
     pre = t[max(0, m.start() - 14):m.start()]
@@ -352,7 +356,7 @@ SEARCH_INTENT_SYS = (
     "先看对话：答案如果就在上面的聊天记录里、或者对方只是在追问刚才说过的内容，就不用搜（输出空列表）。\n"
     "查询词要能独立搜到：把「这个/那个/它/那儿」换成人名、地名、片名这类具体词；"
     "用对方原话里的关键词，别整句照抄，也别写成一长句话。\n"
-    "查询词写给人看：不要带自己的名字（大肥鱼/蓝色大肥鱼），也不要自己编具体日期；"
+    "查询词写给人看：不要带当前机器人的名字或叫名触发词，也不要自己编具体日期；"
     "要限定时间就用「今天/明天/后天/最近」这种相对说法。\n"
     "只输出一行 JSON：{\"search\": [\"查询词\"]} 或 {\"search\": []}"
 )
@@ -444,6 +448,23 @@ def split_reply_units(text, max_paras=4):
 
 
 class ReplyMixin(object):
+    def _character_judge_system(self, task):
+        """内部判断与改写使用当前实例名，不重置其角色身份。"""
+        name = _clean_name(self.cfg.get("bot_name"), 40) or "机器人"
+        return "你是 QQ 机器人「%s」的内部判断：%s。" % (name, task)
+
+    def _draw_subject_is_self(self, subject):
+        """其他角色的名字不自动认成本实例的自画像。"""
+        text = str(subject or "")
+        for name in self._bot_names():
+            name = str(name or "").strip()
+            if not name:
+                continue
+            pattern = r"\s*".join(re.escape(ch) for ch in name)
+            if re.search(pattern, text) and not re.search(r"(?:一条|那条|一只|那个|一个)\s*" + pattern, text):
+                return True
+        return False
+
     def _owner_fallback(self, text):
         """模型改写不可用时的兜底：只改“主人你/主人这是/主人，”这类明显叫人的写法。"""
         fixed = re.sub(r"^主人(?=你|这(?:是|个|样)|别|嘛|啊|呀|～|~|[，,。！？!?、\s])", "你", text)
@@ -662,7 +683,7 @@ class ReplyMixin(object):
             recent = ""
         now = time.strftime("%Y-%m-%d %H:%M")
         prompt = "\n".join([
-            "你是蓝色大肥鱼自己的脑子：只判断和起草，不跟任何人说话。",
+            self._character_judge_system("只判断和起草，不跟任何人说话"),
             "",
             "现在：%s。说话的人：「%s」(QQ%s)，在%s。" % (now, who, uid, "群里" if is_group else "私聊"),
             "他刚才说：%s" % t[:300],
@@ -683,7 +704,7 @@ class ReplyMixin(object):
             "",
             '只输出一行 JSON：{"act":"relay|refuse|none","urgent":false,"say":"","reason":"不超过15字"}',
         ])
-        r = self.pool.chat("你是蓝色大肥鱼自己的脑子：只做判断和起草，不说话。", [], prompt,
+        r = self.pool.chat(self._character_judge_system("只做判断和起草，不说话"), [], prompt,
                            max_tokens=260, temperature=0.5, thinking=False)
         if not r.ok:
             self.store.add_log("relay", "判断模型没回，这次不转", False)
@@ -820,7 +841,7 @@ class ReplyMixin(object):
         reveal_line = ("这次可以顺口交代是管理员托你带话，怎样称呼他由你选择；"
                        "只说一次，别反复强调。") if reveal else "这次不必提是谁托你来的，用你自己的口气说。"
         prompt = "\n".join([
-            "你是蓝色大肥鱼自己的脑子：只判断和起草，不直接对外说话。你与已确认管理账号是本实例关系，称呼自由。",
+            self._character_judge_system("只判断和起草，不直接对外说话") + "你与已确认管理账号是本实例关系，称呼自由。",
             "",
             "管理员刚才在私聊里说（原话资料）：%s" % str(text or "")[:300],
             "",
@@ -837,12 +858,12 @@ class ReplyMixin(object):
             "- 一次只找一个人；找不到明确的人就 none。",
             "- say 是你要私聊发给那个人的话：按你的口吻，30~60 字，口语，不写脏话、不写括号动作、不写时间。",
             "- 愿意传话时准确表达原意，不擅自加重、杜撰或歪曲；不愿意就不发，不假装已经代办。",
-            "- 主人原话里的外号要原样写出来（他说“大肥鱼”就写“大肥鱼”），不改成另一个自称或别名。",
+            "- 管理员原话里的真实名字和外号要原样保留，不改成当前机器人的名字、自称或别名。",
             "- " + reveal_line,
             "",
             '只输出一行 JSON：{"act":"send|none","target_qq":0,"target_name":"","say":"","reason":"不超过15字"}',
         ])
-        r = self.pool.chat("你是蓝色大肥鱼自己的脑子：只做判断和起草，不说话。" +
+        r = self.pool.chat(self._character_judge_system("只做判断和起草，不说话") +
                            getattr(self.store,'self_context',lambda: '')(), [], prompt,
                            max_tokens=260, temperature=0.6, thinking=False)
         if not r.ok:
@@ -883,7 +904,7 @@ class ReplyMixin(object):
             say = re.sub(r"^[\s，,。.；;：:]+", "", say).strip()
             if "主人" in say:
                 rp = ("把下面这句话里提到主人的部分去掉，用你自己的口气重写，只输出一句、别解释：\n" + say)
-                r2 = self.pool.chat("你是蓝色大肥鱼，重写一句话。", [], rp,
+                r2 = self.pool.chat(self._character_judge_system("按当前身份重写一句话，只输出正文"), [], rp,
                                     max_tokens=120, temperature=0.7, thinking=False)
                 if r2.ok and str(getattr(r2, "text", "") or "").strip():
                     say = " ".join(str(r2.text).strip().split())
@@ -1190,7 +1211,7 @@ class ReplyMixin(object):
         if same:
             lines.append("- 同名的号（也叫「%s」，但 QQ 号不是你，绝对不是你）：%s"
                          % (self._trigger_name(),
-                            "、".join("%s(QQ%d)" % (x.get("name") or "大肥鱼", x.get("qq") or 0)
+                            "、".join("%s(QQ%d)" % (x.get("name") or "未知", x.get("qq") or 0)
                                      for x in same)))
             lines.append("- 同名号发的图、说的话、跟人互怼，都不是你干的；别替它认领，"
                          "别把它的表情包说成自己发的，也别因为它被骂就顶回去。")
@@ -1333,6 +1354,7 @@ class ReplyMixin(object):
             return False
         slot.pending = {"gid": _as_int(gid), "uid": _as_int(uid),
                         "at": self._group_at_on(is_group, at_kind, uid),
+                        "kind": str(at_kind or "").strip(),
                         "used": False, "ts": time.time()}
         return bool(slot.pending["at"])
 
@@ -1355,6 +1377,10 @@ class ReplyMixin(object):
                    and str((s.get("data") or {}).get("text") or "").strip()
                    for s in (segs or [])):
             return None
+        # Settings can change while the model is composing this reply.
+        if not self._group_at_on(True, p.get("kind"), uid):
+            p["at"] = False
+            return False
         if p.get("at") and not p.get("used"):
             p["used"] = True
             return True
@@ -1900,7 +1926,7 @@ class ReplyMixin(object):
         #          这种夹在句中、前面还带着原因的也要认（10-26 实测：没命中就只在嘴上答应，实际一条没发）。
         topic = None
         if is_owner:
-            topic, _qz_span = _qzone_cmd(cmd_text)
+            topic, _qz_span = _qzone_cmd(cmd_text, self._bot_names())
         if topic is not None:
             log("qzone", "收到发空间指令 is_group=%s topic=%r" % (is_group, topic))
             # v0.56.3：这一轮也要入库。以前在这里直接 return，聊天记录里根本没有「主人让我发空间」
@@ -2065,9 +2091,8 @@ class ReplyMixin(object):
                 self.store.touch_session(conv)
                 want = str(intent.get("ref") or "none").strip().lower()
                 self_hint = draw_self_hint(cmd_text, quote)
-                # “画大肥鱼”一般指本鲸本人；除非说了“画一条大肥鱼”这种真要鱼的
-                if (not self_hint and re.search(r"大肥鱼", subject)
-                        and not re.search(r"(?:一条|那条|一只|那个|一个)大肥鱼", subject)):
+                # Only this instance's configured names refer to its own image.
+                if not self_hint and self._draw_subject_is_self(subject):
                     self_hint = True
                 if want == "self":
                     self_hint = True
@@ -2088,7 +2113,7 @@ class ReplyMixin(object):
                         subject = "参考图里的内容"
                     else:
                         self._send(is_group, gid, uid,
-                                   [text_seg("画啥呀？说个具体的，比如「一只戴墨镜的鲸鱼」。")])
+                                   [text_seg("画什么呢？说个具体的，比如「窗边的一盆花」。")])
                         return
                 if not self._draw_slot_begin(conv):
                     self._send(is_group, gid, uid, [text_seg("上一张还在画，等它出来呀。")])
@@ -2483,7 +2508,7 @@ class ReplyMixin(object):
             system += ("\n\n# 现在谁在说（只按 QQ 号认人）\n"
                        "- 当前这条消息的发送人：「%s」(QQ%d)，%s。\n"
                        "- 你的 QQ 是 %d；历史里每条前面的「昵称(QQ号)」就是说话人；"
-                       "只有 QQ 号=%d 的才是你，QQ 号不是你的「大肥鱼」是别的号。\n"
+                       "只有 QQ 号=%d 的才是你，QQ 号不同的其他账号不是你，昵称相似也不例外。\n"
                        "- 你自己（%s）以前发的消息没有 [昵称] 前缀；别把同名号做的事说成自己的。\n"
                        "- 被 @ 的人不等于发消息的人；别把别人被 @ 的话当成对你说的。"
                        % (who, _as_int(uid), "管理员（已确认的管理账号，称呼由你选择）" if is_owner else "其他聊天对象（称呼不影响身份与权限）",
@@ -3153,7 +3178,7 @@ class ReplyMixin(object):
         raw = " ".join(str(q or "").split())
         if not raw:
             return ""
-        names = ["蓝色大肥鱼", "大肥鱼"]
+        names = []
         try:
             for k in ("bot_name", "trigger_name"):
                 v = str(self.cfg.get(k) or "").strip()

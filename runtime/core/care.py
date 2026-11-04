@@ -35,6 +35,14 @@ LINES = {
     ],
 }
 
+# 未明确选择既有角色时不借用另一实例的身份或口气。
+DEFAULT_LINES = [
+    "听到你这样说，我很担心你。先到安全一点的地方，找一位信任的人陪着你，好吗？",
+    "你不用一个人扛着。可以先联系身边信任的人，让他陪你一起度过这会儿。",
+    "我在听。眼下先照顾好自己的安全，把可能伤到你的东西放远一些，再慢慢说。",
+    "谢谢你把这些告诉我。先找个人陪在身边，你愿意说说刚才发生了什么吗？",
+]
+
 LOW_ATTACK_MIN = 10
 LOW_ATTACK_NOTE = (
     "\n\n# 现在先别激他（重要）\n"
@@ -48,7 +56,7 @@ def lines_for(bot_name):
     for key in LINES:
         if key in name:
             return LINES[key]
-    return LINES["蓝色大肥鱼"]
+    return DEFAULT_LINES
 
 
 def care_line(bot_name, conv=""):

@@ -1035,7 +1035,8 @@ class Bot(SelfRuntimeMixin, CompanionMixin, ContextMixin, BotVoiceNoteMixin, Sti
                     if len(target) == 2 and target[0] == "g":
                         segs = []
                         uid = _as_int(r.get("target_uid"))
-                        if uid:
+                        # 自动提醒沿用回复 @ 总开关；关闭时仍按原内容发送提醒。
+                        if uid and self._cfg_on("group_at_reply", True):
                             segs.append(at_seg(int(uid)))
                         segs.append(text_seg(line))
                         ok = self._send(True, int(target[1]), 0, segs)
