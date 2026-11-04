@@ -324,7 +324,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
 [data-cat="语音"]>:not(.mobileOmitted),[data-cat="翻唱"]>:not(.mobileOmitted){display:none!important}
 </style></head><body>
 <header>
-  <div class="brand">🐋 大肥鱼<span>电脑版 · 控制台</span><b id="verTag" class="ver">v0.21.0</b></div>
+  <div class="brand">🐋 大肥鱼<span>手机版 · 控制台</span><b id="verTag" class="ver">读取版本…</b></div>
   <div id="pill" class="pill">连接中…</div>
   <div class="meta" id="meta"></div>
 </header>
@@ -404,6 +404,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
     <div class="panel">
       <h2>模型（从上到下依次尝试，前一个失败自动换下一个）</h2>
       <div class="hint" style="margin-bottom:10px">这份清单仅供本手机实例使用。写前校验接口与模型编号，并自动保留上一版；保存后供本实例的大脑、看图、转写和其他已配置功能使用。</div>
+      <div class="hint" style="margin-bottom:10px">绘图和表情包语义索引使用方舟服务，需要在此配置与其服务同一 HTTPS 主机与完整 API 路径的方舟线路；没有匹配线路时会明确失败，不借用其他厂商的密钥。声音转写请在手机版设置主页单独配置。</div>
       <div class="controls">
         <button class="ghost" onclick="testAllModels()">全部测一遍</button>
         <span id="modelTestMsg" class="hint">测的是已保存的配置；改完先「保存模型」再测。</span>
@@ -687,9 +688,9 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
                   <button type="button" onclick="loadBlacklist()">重新读取</button>
                   <span class="hint" id="blacklistStatus" role="status"></span>
                   <p class="hint">单独保存后立即生效，优先于白名单。群聊和私聊均不回复、不收录消息、不主动联系；引用和转发中的对应消息也忽略。解除时删掉号码再保存。历史原始数据保留，旧摘要会重建。</p>
-                  <p class="hint">主人也可在群里说「@大肥鱼 拉黑 @某人」或「@大肥鱼 取消拉黑 @某人」；支持 QQ 号、无重名昵称，私聊可直接说。其他人不能操作。</p>
+                  <p class="hint">管理员也可在群里 @本小号说「拉黑 @某人」或「取消拉黑 @某人」；支持 QQ 号、无重名昵称，私聊可直接说。其他人不能操作。</p>
                 </div>
-                <label class="check">由大肥鱼自己决定是否接话（群聊与私聊）<input type="checkbox" name="reply_autonomy_enabled"></label>
+                <label class="check">由机器人自己决定是否接话（群聊与私聊）<input type="checkbox" name="reply_autonomy_enabled"></label>
                 <div class="hint full">被 @、引用、叫名字或主人找它，都是聊天邀请。它可以按心情、聊天消耗和话题选择接话、发呆、摸鱼或歇一会儿；安静时不发敷衍消息，也不安排补答。管理口令、安全关怀和已约好的提醒继续正常处理。关闭后恢复原来的接话方式。<br><span id="autonomyStatus" role="status">接话状态读取中…</span></div>
                 <label class="check">群里只把「叫我」的消息交给它（@ / 叫名字 / 引用；不勾＝每句都可考虑）<input type="checkbox" name="group_need_at"></label>
                 <label class="check">↳ 被叫名字也接（不勾＝只认 @ 和引用）<input type="checkbox" name="group_trigger_name"></label>
@@ -914,7 +915,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
               <h3>群聊主动发言（默认关）</h3>
               <p class="catHint">和「主动聊天（私聊找好友）」是两回事：这里管的是它在群里自己开口。</p>
               <h4>群聊陪伴模式</h4>
-              <p class="catHint">选择允许大肥鱼自主接话的群；未勾选的群仍按原来的触发规则回复。修改后点页面底部「保存设置」。</p>
+              <p class="catHint">选择允许本实例自主接话的群；未勾选的群仍按原来的触发规则回复。修改后点页面底部「保存设置」。</p>
               <input type="hidden" name="group_companion_groups">
               <div id="companionGroups" class="vcList"><span class="vcEmpty">正在读取群名单…</span></div>
               <div class="hint full">只显示允许回复的群；若没有所需群，先在「身份与聊天范围」中添加。陪伴模式沿用下方群聊安静时段。</div>
@@ -935,7 +936,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
               <p class="catHint">它自己想到就发；不想让它自主发就关掉，不影响你叫它发。</p>
               <div class="controls">
                 <label class="check">允许它自己想到就发（关掉＝只在你叫它发的时候才发）<input type="checkbox" name="qzone_enabled"></label>
-                <div class="hint full">注意：这个开关只管「自己想到就发」。关掉也不影响你在群里或私聊叫它发（「大肥鱼发个空间…」照样会发）。</div>
+                <div class="hint full">注意：这个开关只管「自己想到就发」。关掉后，在群里或私聊明确叫本实例发空间，仍按会话权限和实际接口结果处理。</div>
                 <label>模式 <select name="qzone_mode">
                   <option value="dry">dry 演练（只记账、不真发）</option>
                   <option value="live">live 真发到空间</option>
@@ -944,7 +945,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
                 <label>两条之间至少隔多久（秒，最短 3600=1 小时）<input name="qzone_min_interval_sec"></label>
                 <label>活跃时段（如 9-23，表示 9:00~23:00）<input name="qzone_active_hours"></label>
                 <label class="check">自动回评论（有上限，太冲的不回）<input type="checkbox" name="qzone_comment_reply"></label>
-                <label class="check">程序报错时发邮件给我<input type="checkbox" name="alert_email_enabled"></label>
+                <label class="check">空间后台异常时发邮件给我（不含运维体检）<input type="checkbox" name="alert_email_enabled"></label>
                 <label>告警邮箱 SMTP 账号（QQ 邮箱就填 xxx@qq.com）<input name="alert_smtp_user" placeholder="xxxxx@qq.com"></label>
                 <label>SMTP 授权码（QQ邮箱→设置→账户→开启SMTP→生成授权码；留空=不改）<input type="password" name="alert_smtp_pass" placeholder="已配置则留空"></label>
                 <label>报错发到这个邮箱<input name="alert_mail_to" placeholder="xxxxx@qq.com"></label>
@@ -1018,7 +1019,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
             <div class="saveBar">
               <button type="submit">保存设置</button>
               <span id="saveMsg" class="hint"></span>
-              <span class="hint" id="settingsSaveHint">普通设置需保存；语音和翻唱设置自动保存。</span>
+              <span class="hint" id="settingsSaveHint">普通设置需保存；本版省略的语音发声和翻唱不能启用。</span>
             </div>
           </form>
         </div>
@@ -1034,7 +1035,7 @@ html.light{--bg:#f2f4fb;--card:#fff;--line:#d9e1ee;--text:#243047;--dim:#586b87;
         <label class="check" style="margin:0"><input type="checkbox" id="gpGroup" checked> 群聊</label>
         <input id="gpGid" placeholder="群号（群聊时填）" style="width:150px">
         <input id="gpUid" placeholder="QQ 号" style="width:150px">
-        <input id="gpText" placeholder="要说的话，例：大肥鱼在吗" style="flex:1;min-width:220px">
+        <input id="gpText" placeholder="要说的话；模拟叫名时请填当前唤醒词" style="flex:1;min-width:220px">
         <button class="ghost" onclick="gateProbe()">试算</button>
       </div>
       <div id="gpOut" class="hint">—</div>
@@ -1067,7 +1068,7 @@ const $=s=>document.querySelector(s);
 const fmtMB=n=>(n/1048576).toFixed(1)+' MB';
 const fmtTime=t=>new Date(t*1000).toLocaleTimeString('zh-CN',{hour12:false});
 const TAB_NAMES=['overview','messages','models','memory','share','kb','sticker','usage','convs','diary','dreams','remind','settings','probe','logs'];
-const TAB_DESCRIPTIONS={overview:'查看运行状态和最近消息',messages:'查找最近的聊天与未回复消息',convs:'查看已有会话',dreams:'查看夜间梦境与真实素材',diary:'查看和管理日记',remind:'查看已记录的提醒',memory:'查看人物、群组和记忆',share:'查看分享内容与状态',models:'管理三只机器人共用的模型线路',usage:'查看模型调用和用量',sticker:'管理表情包与使用设置',settings:'调整机器人行为、语音和翻唱',probe:'排查消息为什么没有回复',logs:'查看存储与系统日志'};
+const TAB_DESCRIPTIONS={overview:'查看运行状态和最近消息',messages:'查找最近的聊天与未回复消息',convs:'查看已有会话',dreams:'查看夜间梦境与真实素材',diary:'查看和管理日记',remind:'查看已记录的提醒',memory:'查看人物、群组和记忆',share:'查看分享内容与状态',models:'管理本手机实例的模型线路',usage:'查看模型调用和用量',sticker:'管理表情包与使用设置',settings:'调整本实例的行为与聊天范围',probe:'排查消息为什么没有回复',logs:'查看存储与系统日志'};
 function activeTab(){
   const el=document.querySelector('.tab.active');
   return el?el.dataset.tab:'overview';
@@ -1194,8 +1195,8 @@ const SelfUI=(()=>{
     last=Date.now();const id=++seq;$('#selfStatus').textContent='读取中…';
     try{const r=await fetch('/api/self-state',{cache:'no-store'}),d=await r.json();if(id!==seq)return;
       if(!r.ok||!d.ok)throw new Error(d.error||'读取失败');render(d);
-      const family=d.family||{};$('#selfStatus').textContent=(d.enabled?'正在从经历中成长':'学习暂停，当前的她与经历保留')+
-        (family.confirmed?' · 本实例关系已确认':'')+(family.profile_available?' · 已有管理员档案可接续':'');
+      const administrator=d.administrator||{};$('#selfStatus').textContent=(d.enabled?'正在从经历中成长':'学习暂停，当前的她与经历保留')+
+        (administrator.configured?' · 管理员已配置':'')+(administrator.profile_available?' · 已有管理员档案可接续':'');
     }catch(e){if(id===seq)$('#selfStatus').textContent='读取失败：'+e.message;}
   }
   $('#selfRefresh').onclick=()=>load(true);return {load};
@@ -1440,7 +1441,7 @@ function renderMsgs(sel,list,filter,query){
     });
     const cn=convName(m.conv);
     const inGroup=String(m.conv||'').indexOf('g:')===0;
-    const who=m.dir==='out'?'蓝色大肥鱼':(inGroup&&m.who?m.who:'对方');
+    const who=m.dir==='out'?((state&&state.config&&state.config.bot_name)||'机器人'):(inGroup&&m.who?m.who:'对方');
     return '<div class="msg '+(m.dir==='out'?'out':'in')+'"><div class="who">'+escapeHtml(who)+'<br>'+fmtTime(m.ts)+'<br><span class="hint">'+escapeHtml(cn)+'</span></div><div class="txt">'+escapeHtml(m.text)+media+'</div></div>';
   }).join('')||'<div class="hint">没有符合条件的消息</div>';
 }
@@ -3308,9 +3309,9 @@ async function saveModels(){
       setTimeout(()=>{const el=$('#modelMsg');if(el)el.textContent='';},8000);
       return;
     }
-    $('#modelMsg').textContent='已保存 · 三只同时生效';
+    $('#modelMsg').textContent='已保存 · 本手机实例生效';
     if(r.ok){
-      models.forEach(m=>{if(m.api_key && m.api_key!=='***'){m.keySet=true;m.api_key='';}});
+      models=normalizeModels(jr.models||[]);
       modelsRendered=true;renderModels();
       const vs=$('#visionSelect');if(vs)vs.value=vision;
     }
@@ -3328,7 +3329,7 @@ function changedSettings(){return settingFields().filter(el=>Object.prototype.ha
 function updateSettingsDirty(){
   if(!formFilled) return;
   const count=changedSettings().length, hint=$('#settingsSaveHint');
-  if(hint) hint.textContent=count?'有 '+count+' 项普通设置未保存；切换页面不会丢失。':'普通设置需保存；语音和翻唱设置自动保存。';
+  if(hint) hint.textContent=count?'有 '+count+' 项普通设置未保存；切换页面不会丢失。':'普通设置需保存；本版省略的语音发声和翻唱不能启用。';
 }
 $('#form').addEventListener('input',updateSettingsDirty);
 $('#form').addEventListener('change',updateSettingsDirty);

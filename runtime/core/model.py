@@ -97,7 +97,9 @@ class Ark(object):
 
     def __init__(self, conf, fallback_key="", thinking_enabled=True, thinking_budget=0, reasoning_effort=""):
         self.conf = dict(conf or {})
-        self.key = self.conf.get("api_key") or fallback_key or ""
+        # The legacy global fallback has no service binding. Every configured
+        # route must carry its own key; a missing one cannot borrow another key.
+        self.key = self.conf.get("api_key") or ""
         # True = 让模型自己想（更聪明、更慢）；False = 发关思考参数
         self.thinking_enabled = bool(thinking_enabled)
         # 想多少 token 就停：硅基流动实测 512 约 6 秒、1024 能拖到 37 秒、不设上限 79 秒
@@ -180,11 +182,12 @@ class Ark(object):
             body.pop("reasoning_effort", None)
         if response_format is not None and allow_response_format:
             body["response_format"] = response_format
-        headers = {"Content-Type": "application/json; charset=utf-8", "Authorization": "Bearer " + self.key}
+        headers = {"Content-Type": "application/json; charset=utf-8"}
         t0 = time.time()
         try:
             req = urllib.request.Request(self._endpoint(), data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
                                          headers=headers, method="POST")
+            req.add_unredirected_header("Authorization", "Bearer " + self.key)
             if _budget is not None:
                 timeout = _budget.request_timeout(timeout)
                 if timeout is None:
@@ -527,7 +530,7 @@ class ModelPool(object):
             else:
                 mt_i = mt
             mt_i = min(16384, mt_i)
-            ark = Ark(conf, self.cfg.get("api_key") or "", think, budget, effort)
+            ark = Ark(conf, "", think, budget, effort)
             r = ark.chat(messages, mt_i, temp, timeout=timeout, tools=tools, tool_choice=tool_choice, **format_kwargs)
             if r.status == 429:
                 self._note_rate_limit()
@@ -552,7 +555,7 @@ class ModelPool(object):
                 if str(getattr(r, "finish", "") or "").lower() == "length" and (_budget is None or not _budget.reason()):
                     log("model", "正文空且被截断，关思考加长重试 model=%s" % conf.get("id", ""))
                     try:
-                        ark2 = Ark(conf, self.cfg.get("api_key") or "", False, 0)
+                        ark2 = Ark(conf, "", False, 0)
                         r2 = ark2.chat(messages, max(mt_i, 2048), temp, timeout=timeout,
                                        tools=tools, tool_choice=tool_choice, **format_kwargs)
                         if r2.ok:
@@ -588,7 +591,7 @@ class ModelPool(object):
         for conf in ordered:
             timeout = self._timeout_for(conf)
             think, budget, effort = self._thinking_for(conf)
-            ark = Ark(conf, self.cfg.get("api_key") or "", think, budget, effort)
+            ark = Ark(conf, "", think, budget, effort)
             full = (system_prompt + "\n" + prompt).strip()
             r = ark.vision(full, image_bytes, mime, timeout=timeout)
             if r.status == 429:

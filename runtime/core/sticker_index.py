@@ -1,21 +1,50 @@
-import hashlib, json, math, os, struct, time, urllib.request, urllib.error
+import hashlib, json, math, os, struct, time, urllib.request, urllib.error, urllib.parse
+
+EMBED_API = "https://ark.cn-beijing.volces.com/api/plan/v3/embeddings"
+MEDIA_KEY_ERROR = "请在 AI 接口设置中添加已启用的方舟 /api/plan/v3 线路及其密钥；绘图与语义索引不借用其他接口的密钥"
 
 
-def _cfg_key(cfg):
-    """取向量用的 Key：全局没配就用第一个火山模型的 Key（服务器版 Key 是按模型存的）。"""
+def _https_origin(value):
+    """A credential belongs to its configured HTTPS origin, never a URL substring."""
     try:
-        k = str(cfg.get("api_key") or "").strip()
-        if k:
-            return k
-        models = cfg.get("models") or []
-        for m in models:
-            if "volces.com" in str(m.get("base_url") or "") and m.get("api_key"):
-                return str(m.get("api_key"))
-        for m in models:
-            if m.get("api_key"):
-                return str(m.get("api_key"))
+        raw = str(value or "")
+        if any(ch.isspace() or ord(ch) < 32 for ch in raw):
+            return None
+        url = urllib.parse.urlsplit(raw)
+        if (url.scheme != "https" or not url.hostname or url.username is not None
+                or url.password is not None or url.query or url.fragment):
+            return None
+        port = url.port if url.port is not None else 443
+        return (url.hostname, port) if 1 <= port <= 65535 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _cfg_key(cfg, endpoint=EMBED_API):
+    """Require the same origin and API base; different Ark plans need distinct keys."""
+    origin = _https_origin(endpoint)
+    if origin is None:
+        return ""
+    path = urllib.parse.urlsplit(endpoint).path
+    suffix = next((part for part in ("/images/generations", "/embeddings") if path.endswith(part)), None)
+    if suffix is None:
+        return ""
+    api_path = path[:-len(suffix)].rstrip("/")
+    try:
+        models = cfg.models() if callable(getattr(cfg, "models", None)) else cfg.get("models")
     except Exception:
-        pass
+        return ""
+    for model in models or []:
+        if not isinstance(model, dict) or not model.get("enabled", True):
+            continue
+        if _https_origin(model.get("base_url")) != origin:
+            continue
+        if urllib.parse.urlsplit(str(model.get("base_url"))).path.rstrip("/") != api_path:
+            continue
+        key = str(model.get("api_key") or "").strip()
+        if key and not any(ord(ch) < 32 for ch in key):
+            return key
+    # A legacy global key has no origin binding and cannot be inferred safely.
     return ""
 
 
@@ -33,7 +62,7 @@ class StickerIndex(object):
             self.meta_path = os.path.join(self.dir, "sticker_vectors.json")
             self.bin_path = os.path.join(self.dir, "sticker_vectors.bin")
         self.model = str(cfg.get("sticker_embed_model") or "doubao-embedding-vision-250515")
-        self.url = "https://ark.cn-beijing.volces.com/api/plan/v3/embeddings"
+        self.url = EMBED_API
         self.files = []
         self.dim = 0
         self.norms = []
@@ -75,14 +104,14 @@ class StickerIndex(object):
 
 
     def _embed_text(self, text):
-        key = _cfg_key(self.cfg)
+        key = _cfg_key(self.cfg, self.url)
         if not key:
             return None
         body = json.dumps({"model": self.model, "input": [str(text)[:1000]]}, ensure_ascii=False).encode("utf-8")
         req = urllib.request.Request(self.url, data=body, method="POST", headers={
             "Content-Type": "application/json; charset=utf-8",
-            "Authorization": "Bearer " + key,
         })
+        req.add_unredirected_header("Authorization", "Bearer " + key)
         for attempt in (1, 2):
             try:
                 with urllib.request.urlopen(req, timeout=20) as resp:
@@ -122,8 +151,8 @@ def _post_embeddings(url, model, key, inputs, timeout=90):
     body = json.dumps({"model": model, "input": inputs}, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(url, data=body, method="POST", headers={
         "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Bearer " + key,
     })
+    req.add_unredirected_header("Authorization", "Bearer " + key)
     last = None
     for attempt in range(3):
         try:
@@ -158,10 +187,10 @@ def build_cards_index(data_dir, cfg, progress=None):
     bin_path = os.path.join(st, "sticker_vectors_cards.bin")
     out_meta = os.path.join(st, "sticker_vectors_cards.json")
     model = str(cfg.get("sticker_embed_model") or "doubao-embedding-vision-250515")
-    url = "https://ark.cn-beijing.volces.com/api/plan/v3/embeddings"
+    url = EMBED_API
     key = _cfg_key(cfg)
     if not key:
-        return {"ok": False, "error": "缺少 API Key"}
+        return {"ok": False, "error": MEDIA_KEY_ERROR}
 
     cards = load_cards(data_dir)
     items = []
@@ -262,10 +291,10 @@ def build_text_index(data_dir, cfg, progress=None):
     bin_path = os.path.join(st, "sticker_vectors.bin")
     out_meta = os.path.join(st, "sticker_vectors.json")
     model = str(cfg.get("sticker_embed_model") or "doubao-embedding-vision-250515")
-    url = "https://ark.cn-beijing.volces.com/api/plan/v3/embeddings"
+    url = EMBED_API
     key = _cfg_key(cfg)
     if not key:
-        return {"ok": False, "error": "缺少 API Key"}
+        return {"ok": False, "error": MEDIA_KEY_ERROR}
 
     items = []
     with open(meta_path, "r", encoding="utf-8") as f:
@@ -363,7 +392,7 @@ def embed_texts(cfg, texts):
     if not key or not texts:
         return []
     model = str(cfg.get("sticker_embed_model") or "doubao-embedding-vision-250515")
-    url = "https://ark.cn-beijing.volces.com/api/plan/v3/embeddings"
+    url = EMBED_API
     out = []
     for i in range(0, len(texts), 10):
         batch = [str(t)[:800] for t in texts[i:i + 10]]

@@ -76,6 +76,15 @@ def _id_list(v):
     return out
 
 
+def current_self_state(cfg, store):
+    """An administrator account is configuration, not evidence of a family relationship."""
+    owner = int(cfg.get("owner_qq") or 0)
+    return dict(store.self_snapshot(include_versions=True),
+                enabled=bool(cfg.get("self_growth_enabled", True)),
+                administrator={"configured": bool(owner),
+                               "profile_available": bool(owner and store.get_profile(owner))})
+
+
 def _pythonw():
     if not IS_WIN:
         return sys.executable
@@ -179,13 +188,11 @@ def _vision_client(cfg):
         if not m.get("enabled"):
             continue
         conf = dict(m)
-        if not conf.get("api_key"):
-            conf["api_key"] = cfg.get("api_key") or ""
         if not conf.get("api_key") or not conf.get("base_url") or not conf.get("model"):
             continue
         if "127.0.0.1" in str(conf.get("base_url")) or "localhost" in str(conf.get("base_url")):
             continue
-        return Ark(conf, fallback_key=cfg.get("api_key") or "", thinking_enabled=False)
+        return Ark(conf, thinking_enabled=False)
     return None
 
 
@@ -1899,10 +1906,7 @@ def main():
                 return
             if path == '/api/self-state':
                 try:
-                    snapshot=sup.store.self_snapshot(include_versions=True)
-                    owner=int(sup.cfg.get('owner_qq') or 0)
-                    self._json(200,dict(snapshot,enabled=bool(sup.cfg.get('self_growth_enabled',True)),
-                        family=dict(role='父亲',confirmed=bool(owner),profile_available=bool(owner and sup.store.get_profile(owner)))))
+                    self._json(200, current_self_state(sup.cfg, sup.store))
                 except Exception:
                     self._json(500,{'ok':False,'error':'当前自我暂不可用'})
                 return
@@ -2055,9 +2059,6 @@ def main():
 
         def _handle_post(self):
             path = urlsplit(self.path).path
-            if not self._origin_ok():
-                self._json(403, {"ok": False, "error": "origin"})
-                return
             try:
                 length = int(self.headers.get("Content-Length") or 0)
             except ValueError:
@@ -2069,6 +2070,21 @@ def main():
                 return
             if getattr(self, 'connection', None) is not None:
                 self.connection.settimeout(10)
+            if not self._origin_ok():
+                # Drain only the size-checked body before closing. On Windows an
+                # unread body can reset TCP and hide the intended 403 response.
+                remaining = length
+                try:
+                    while remaining:
+                        chunk = self.rfile.read(min(remaining, 65536))
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                except (OSError, TimeoutError):
+                    pass
+                self.close_connection = True
+                self._json(403, {"ok": False, "error": "origin"})
+                return
             if path == "/api/sticker_upload":
                 try:
                     n = int(self.headers.get("Content-Length") or 0)
@@ -2335,7 +2351,10 @@ def main():
                         mid = str(m.get("id") or ("m" + str(len(clean) + 1)))[:40]
                         key = str(m.get("api_key") or "").strip()
                         if key in ("", "***"):
-                            key = str((old.get(mid) or {}).get("api_key") or "")
+                            previous = old.get(mid) or {}
+                            same_base = (str(previous.get("base_url") or "").strip().rstrip("/") ==
+                                         str(m.get("base_url") or "").strip().rstrip("/"))
+                            key = str(previous.get("api_key") or "") if same_base else ""
                         clean.append({
                             "id": mid,
                             "name": str(m.get("name") or m.get("model"))[:60],
@@ -2346,7 +2365,9 @@ def main():
                         })
                     sup.cfg.set("models", clean)
                     sup.cfg.set("vision_model_id", str(form.get("vision_model_id") or ""))
-                    self._json(200, {"ok": True})
+                    safe_models = [{**{k: v for k, v in m.items() if k != "api_key"},
+                                    "api_key_set": bool(m.get("api_key"))} for m in clean]
+                    self._json(200, {"ok": True, "models": safe_models})
                 except Exception as e:
                     self._json(500, {"ok": False, "error": str(e)})
                 return
@@ -2361,7 +2382,7 @@ def main():
                     if not conf:
                         self._json(404, {"ok": False, "error": "模型不存在，先保存再测"})
                         return
-                    key = str(conf.get("api_key") or "") or str(sup.cfg.get("api_key") or "")
+                    key = str(conf.get("api_key") or "")
                     t0 = time.time()
                     r = Ark(conf, key, False, 0).chat(
                         [{"role": "user", "content": "只回两个字：在的"}],
@@ -3513,15 +3534,23 @@ def save_video_browse(cfg, form):
 
 
 def apply_settings(cfg, form):
+    owner = None
+    if "owner_qq" in form:
+        raw_owner = str(form.get("owner_qq") or "").strip()
+        if raw_owner in ("", "0"):
+            owner = 0
+        elif not re.fullmatch(r"[1-9][0-9]{4,11}", raw_owner):
+            raise ValueError("管理员 QQ 号格式无效")
+        else:
+            owner = int(raw_owner)
+        if owner and str(owner) == str(cfg.get("login_uin") or ""):
+            raise ValueError("机器人小号和管理员 QQ 必须不同")
     if "allow_all_users" in form:
         cfg.set("allow_all_users", str(form.get("allow_all_users") or "").strip().lower() in ("1", "on", "true", "yes"))
     if form.get("api_key"):
         cfg.set("api_key", form["api_key"].strip())
-    if "owner_qq" in form:
-        try:
-            cfg.set("owner_qq", max(0, int(str(form["owner_qq"]).strip() or 0)))
-        except Exception:
-            cfg.set("owner_qq", 0)
+    if owner is not None:
+        cfg.set("owner_qq", owner)
     if "owner_name" in form:
         cfg.set("owner_name", str(form.get("owner_name") or "").strip()[:40])
     for key in ("allow_users", "allow_groups"):
@@ -3588,8 +3617,9 @@ def apply_settings(cfg, form):
     # v0.63.0：记忆分层遗忘总开关
     if "memory_decay_enabled" in form:
         cfg.set("memory_decay_enabled", form.get("memory_decay_enabled") in ("1", "on", "true", "True"))
-    if "image_watch" in form:
-        cfg.set("image_watch", form.get("image_watch") in ("1", "on", "true", "True"))
+    for key in ("image_watch", "image_watch_unlimited"):
+        if key in form:
+            cfg.set(key, form.get(key) in ("1", "on", "true", "True"))
     # v0.40.0 表情包判定开关（在「表情包」页保存）
     for key in ("sticker_judge_enabled", "sticker_wait_ready", "sticker_text_only", "sticker_fit_enabled"):
         if key in form:

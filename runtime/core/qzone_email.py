@@ -67,7 +67,7 @@ def _build_body(subject, body, dedupe_key=""):
     lines.append("-" * 40)
     lines.append(str(body or "").strip() or "（正文为空）")
     lines.append("")
-    lines.append("-- 大肥鱼电脑版自动告警，不用回复。")
+    lines.append("-- 大肥鱼手机版空间告警，不用回复。")
     return "\n".join(lines)
 
 

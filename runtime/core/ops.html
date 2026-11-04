@@ -97,7 +97,7 @@ html.light .botitem.on{background:#e3edfa;border-color:#397bd0}
   <section id="tab-health">
     <div class="row" style="margin-bottom:12px">
       <button class="btn pri" id="btnCheck" onclick="selftest()">立即体检</button>
-      <span class="hint">只检查，不发任何 QQ 消息，也不会打扰你；有问题才会发邮件。</span>
+      <span class="hint">只检查本实例，不发 QQ 消息或邮件；结果显示在本页。</span>
     </div>
     <div id="mailrow" class="hint" style="margin-bottom:12px"></div>
     <div id="checksummary" class="hint" style="margin-bottom:10px"></div>
@@ -117,7 +117,7 @@ html.light .botitem.on{background:#e3edfa;border-color:#397bd0}
     <div class="persona">
       <div>
         <div class="botlist" id="botlist"></div>
-        <a class="btn ghost sm" style="margin-top:10px;width:100%;display:block;text-align:center" href="http://127.0.0.1:18991/#bots" target="_blank" rel="noopener">去总控台加机器人 ↗</a>
+        <p class="hint">本应用只管理当前手机实例。添加其他机器人不属于本版范围。</p>
       </div>
       <div class="card">
         <div id="personaHead" class="hint">左边选择机器人，查看当前实际使用的资料。</div>
@@ -205,6 +205,7 @@ function renderMail(){
   var m=(S&&S.mail)||{};
   var box=$('#mailrow');
   if(!box) return;
+  if(m.supported===false){box.textContent=m.hint||'本版未接入邮件告警，请查看本机日志。';return;}
   box.innerHTML=(m.ready
       ? '<span style="color:#8fe6b4">邮件通道：✅ 已配置 → '+esc(m.to||'')+'</span> <button class="btn ghost sm" onclick="mailTest()">发测试邮件</button>'
       : '<span style="color:#ffc857">邮件通道：⚠️ '+esc(m.hint||'没配好')+'</span> <a class="btn ghost sm" href="/" target="_blank">去设置页填</a>');
@@ -343,9 +344,10 @@ async function selftest(){
   try{
     var d=await api('/api/ops/selftest',{method:'POST',body:new URLSearchParams({})});
     if(d.note) toast(d.note);
-    var r=d.result||{};
+    var r=d.result;
+    if(!r||!Array.isArray(r.bots)||!r.bots.length)throw new Error('体检没有返回可核对的检查结果');
     var bad=(r.bots||[]).filter(function(x){return !x.ok}).length;
-    toast(bad? ('体检完成：'+bad+' 只不正常，看下面标红的') : '体检完成：都正常');
+    toast(bad? ('体检完成：'+bad+' 只不正常，看下面标红的') : '体检完成：所列本机检查通过（不代表 QQ 收发已验收）');
     await load();
   }catch(e){ toast('体检失败：'+e.message) }
   b.disabled=false; b.textContent='立即体检';

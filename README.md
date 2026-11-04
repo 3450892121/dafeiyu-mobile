@@ -4,7 +4,7 @@
 
 ## 安装与使用
 
-安装包：`dist/dafeiyu-mobile-0.2.11-arm64.apk`。需要安卓 8.0 以上、64 位 ARM，建议至少 6 GB 内存和 4 GB 空闲存储。只安装这个 App，无需另装 Termux。
+安装包：`dist/dafeiyu-mobile-0.2.12-arm64.apk`。需要安卓 8.0 以上、64 位 ARM，建议至少 6 GB 内存和 4 GB 空闲存储。只安装这个 App，无需另装 Termux。首次使用仍需联网初始化、配置自己的 AI 接口和 QQ 小号并完成登录；安装包不含任何人的密钥或登录资料。
 
 1. 打开软件，点击“初始化 / 修复运行组件”。连接 Wi-Fi 和电源，预留至少 2.5 GB 空间；首次会从 Ubuntu、PyPI、腾讯及 NapCat 官方来源下载私有运行组件。
 2. 打开“设置与管理”，填写**新机器人小号**和与之不同的管理员 QQ。点击完整管理页，添加自己的 AI 接口、模型以及允许的好友和群。
@@ -25,6 +25,8 @@
 若显示“业务回复已暂停”，在设置页明确点击“恢复业务回复”；普通启动不会解除此暂停。恢复业务开关不会解除 QQ 验证或连接安全暂停。原生按钮和网页启停均同步开机恢复意图，手动停止或安全暂停后不会自动重启机器人。
 
 全部功能及逐项验收要求见 [功能清单](spec/features.json)。`implemented` 表示已有功能源码和隔离检查，**不表示手机已经实测通过**。真实 QQ、B站与空间操作仍需现场授权并取得实际回执。接口失效、风控和系统后台限制会如实报错。
+
+聊天线路可自行配置兼容接口，每条线路单独填写密钥。当前绘图和向量索引适配方舟 `https://ark.cn-beijing.volces.com/api/plan/v3`，只使用同一接口路径中已启用线路的密钥；普通聊天线路可用不代表这些能力也可用。不同套餐的地址、密钥和模型支持范围需分别核对：[Agent Plan 图片接口](https://docs.volcengine.com/docs/ark/agent-plan-personal-visual-models?lang=en)、[Agent Plan 向量接口](https://docs.volcengine.com/docs/ark/agent-plan-personal-vectorized-models?lang=en)。本版不自动切换套餐或调用其他计费路径；没有匹配线路时提示缺项，记忆与表情仍可回退关键词和标签检索。
 
 原版的语音发声与翻唱依赖电脑端 Breeze/GPU 服务，本版按用户允许范围不接入这些服务；文字、图片、歌曲分享、文件、字幕、视频取帧和声音转写继续保留。没有证据证明所选实现可以降低封号率。
 
@@ -48,6 +50,8 @@ powershell -ExecutionPolicy Bypass -File tools/build-apk.ps1
 ```
 
 Python 检查环境需要 `runtime/requirements.txt` 的依赖，可通过 `-Python` 指定已有的私有解释器。构建脚本可传 `-JdkHome` 和 `-SdkHome`，默认使用本项目工具目录。APK 通过资源、DEX、ARM64 库打包、16 KB ZIP 对齐及签名校验；不修改系统配置或参考项目。
+
+公开 Git 仓库前，在完整的本项目 Git 检出中运行 `node tools/check-git-history.mjs`。它检查可达历史文件、历史文件名及提交和标签的敏感特征，命中时仅报告路径或对象编号；源码 ZIP 不含 Git 历史，不能用它证明历史扫描通过。
 
 工程编译 SDK 为 35，私有侧载包目标 SDK 为 28，以允许运行 App 私有 Linux 用户态文件，原因见 [原生应用规格](spec/modules/application.md)。这不是应用商店发布方案，现代安卓的兼容提示和具体内核限制须真机核对。
 

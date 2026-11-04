@@ -49,7 +49,8 @@ def ark_keys(cfg):
 def _post(url, key, body, timeout, provider, extra_headers=None):
     request = urllib.request.Request(url, data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
         method="POST", headers={"Content-Type": "application/json; charset=utf-8",
-                                "Authorization": "Bearer " + key, **(extra_headers or {})})
+                                **(extra_headers or {})})
+    request.add_unredirected_header("Authorization", "Bearer " + key)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             raw = response.read(2 * 1024 * 1024 + 1)

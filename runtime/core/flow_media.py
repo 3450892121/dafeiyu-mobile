@@ -14,7 +14,7 @@ from model import ModelPool
 from persona import Persona, emotion_nudge as persona_emotion_nudge
 from store import Store, _clean_name
 from stickers import Stickers
-from sticker_index import StickerIndex, embed_texts
+from sticker_index import StickerIndex, embed_texts, _cfg_key, MEDIA_KEY_ERROR
 import qq_faces
 from websearch import search_with_fallback, format_for_prompt as websearch_format
 import weather
@@ -31,7 +31,7 @@ import video_reader
 import kb_cards
 import media_cache as mc
 import private_contact
-from blacklist import generation, blocked, policy_changed
+from blacklist import generation, blocked, policy_changed, policy_scope
 
 
 def _clean_response_output(value):
@@ -57,6 +57,12 @@ def owner_note_event(conv, uid, text):
     mid = str(source.get("source_mid") or "") if source.get("conv") == conv else ""
     identity = mid or hashlib.sha256(" ".join(str(text or "").split()).encode("utf-8")).hexdigest()[:24]
     return "third-party:%s:%s:%s" % (conv, uid, identity)
+
+
+def video_summary_cache_key(bot, url, conv, uid):
+    """A reaction may contain chat context; only the same conversation may reuse it."""
+    scope = [str(conv), str(uid), str(generation(bot)), video_reader.cache_key(url)]
+    return 'scoped-v1:' + hashlib.sha256(json.dumps(scope, ensure_ascii=False).encode()).hexdigest()
 
 # ---------- AI 画图（Seedream 5.0 pro，只有主人能用） ----------
 # 2026-10-23 v0.34.0：从「固定命令」改成「模型判断要不要画 + 模型自己写提示词 + 可带参考图」。
@@ -720,14 +726,7 @@ class MediaMixin(object):
 
     # ---------- 画图 ----------
     def _draw_key(self):
-        try:
-            for m in self.cfg.models():
-                k = (m or {}).get("api_key") or self.cfg.get("api_key") or ""
-                if k:
-                    return k
-        except Exception:
-            pass
-        return self.cfg.get("api_key") or ""
+        return _cfg_key(self.cfg, DRAW_API)
 
     def _draw_slot_begin(self, conv):
         """同一个会话同一时间只画一张，避免连点/重复触发。"""
@@ -905,7 +904,7 @@ class MediaMixin(object):
             self._tool_owner_remind("draw_image", uid)
             key = self._draw_key()
             if not key:
-                return fail("没有方舟 Key，画不了。")
+                return fail(MEDIA_KEY_ERROR)
             ref_bytes = []
             for seg in (ref_segs or [])[:DRAW_MAX_REF]:
                 data = seg.get("_data") if isinstance(seg, dict) else None
@@ -937,8 +936,8 @@ class MediaMixin(object):
             size = DRAW_SIZE_HD if hq else DRAW_SIZE_DEFAULT
             body = json.dumps(draw_request_body(prompt, ref_urls, size), ensure_ascii=False).encode()
             req = urllib.request.Request(DRAW_API, data=body,
-                                         headers={"Content-Type": "application/json",
-                                                  "Authorization": "Bearer " + key}, method="POST")
+                                         headers={"Content-Type": "application/json"}, method="POST")
+            req.add_unredirected_header("Authorization", "Bearer " + key)
             with urllib.request.urlopen(req, timeout=DRAW_TIMEOUT) as r:
                 obj = json.loads(r.read().decode("utf-8", "replace"))
             url = ((obj.get("data") or [{}])[0]).get("url") or ""
@@ -1431,7 +1430,7 @@ class MediaMixin(object):
             tools_gate.note(self.store, tool, conv, uid)
             if is_owner:
                 self._tool_owner_remind(tool, uid)
-            key = video_reader.cache_key(url)
+            key = video_summary_cache_key(self, url, conv, uid)
             cache_path = os.path.join(DATA_DIR, "video_cache.json")
             got = video_reader.cache_get(cache_path, key)
             if got and got.get("summary"):
@@ -1804,9 +1803,11 @@ class MediaMixin(object):
                     (transcript or "（没有可用的人声转写）")[:6000],
                     "\n".join(notes[:16]) or "（没有画面描述）"))
 
+    @policy_scope
     def _video_job(self, url, conv, is_group, gid, uid, question="", name="", is_owner=False):
         """后台看视频：下载 → 抽音轨转写 → 抽帧看图 → 总结 → 发回会话。"""
         workdir = ""
+        summary_key = video_summary_cache_key(self, url, conv, uid)
         try:
             workdir = tempfile.mkdtemp(prefix="video-", dir="/tmp")
             log("video", "开始 conv=%s url=%s" % (conv, str(url)[:120]))
@@ -1899,7 +1900,7 @@ class MediaMixin(object):
             except Exception as e:
                 log_exc("video", "入库失败 %r" % (e,))
             video_reader.cache_put(os.path.join(DATA_DIR, "video_cache.json"),
-                                   video_reader.cache_key(url),
+                                   summary_key,
                                    {"title": info.get("title") or "", "summary": text[:4000]})
             # v0.61.0：主人私聊里让它看的视频，也整理成一张知识库卡片（群里/别人的不存）
             if is_owner and not is_group:
@@ -1939,14 +1940,14 @@ class MediaMixin(object):
             log("video", "失败 conv=%s %s" % (conv, e))
             try:
                 self._send(is_group, gid, uid,
-                           [text_seg("这个视频没看成：%s。你把视频文件发我，我直接看文件最稳。" % str(e)[:60])])
+                           [text_seg("这个视频没看成：%s。可以换一个可公开访问的 B站、抖音或快手视频链接。" % str(e)[:60])])
             except Exception:
                 pass
         except Exception as e:
             log_exc("video", "处理异常 %r" % (e,))
             try:
                 self._send(is_group, gid, uid,
-                           [text_seg("看这个视频的时候出了点问题，晚点再试，或者把视频文件发我。")])
+                           [text_seg("读取这个视频时出了问题；可以稍后重试，或换一个可公开访问的 B站、抖音或快手视频链接。")])
             except Exception:
                 pass
         finally:
